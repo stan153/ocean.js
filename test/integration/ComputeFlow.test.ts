@@ -1078,8 +1078,9 @@ describe('Compute flow', () => {
       algorithmAssetRemoteProviderWithCompute != null,
       'algorithmAsset should not be null'
     )
-    const serviceAlgo =
-      algorithmAssetRemoteProviderWithCompute.findServiceByType('compute')
+    const serviceAlgo = algorithmAssetRemoteProviderWithCompute.findServiceByType(
+      'compute'
+    )
     assert(serviceAlgo != null, 'serviceAlgo should not be null')
     // get the compute address first
     computeAddress = await ocean.compute.getComputeAddress(ddo.id, computeService.index)
