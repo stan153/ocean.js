@@ -72,6 +72,7 @@ export class DataTokens {
     return { name, symbol }
   }
 
+
   /**
    * Create new datatoken
    * @param {String} metadataCacheUri
