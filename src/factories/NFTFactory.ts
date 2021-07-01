@@ -22,7 +22,6 @@ export class NFTFactory {
   public GASLIMIT_DEFAULT = 1000000
   public factory721Address: string
   public factory721ABI: AbiItem | AbiItem[]
-  public nftDatatokenABI: AbiItem | AbiItem[]
   public web3: Web3
   private logger: Logger
   public startBlock: number
@@ -31,20 +30,17 @@ export class NFTFactory {
    * Instantiate DataTokens (independently of Ocean).
    * @param {String} factory721Address
    * @param {AbiItem | AbiItem[]} factory721ABI
-   * @param {AbiItem | AbiItem[]} nftDatatokenABI
    * @param {Web3} web3
    */
   constructor(
     factory721Address: string,
     factory721ABI: AbiItem | AbiItem[],
-    nftDatatokenABI: AbiItem | AbiItem[],
     web3: Web3,
     logger: Logger,
     startBlock?: number
   ) {
     this.factory721Address = factory721Address
     this.factory721ABI = factory721ABI || (defaultFactory721ABI.abi as AbiItem[])
-    this.nftDatatokenABI = nftDatatokenABI || (defaultNFTDatatokenABI.abi as AbiItem[])
     this.web3 = web3
     this.logger = logger
     this.startBlock = startBlock || 0
