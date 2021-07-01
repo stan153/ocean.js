@@ -1,22 +1,20 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/DTFactory.json' // TODO: update
-import defaultNFTDatatokenABI from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json' //TODO: update
+import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/DTFactory.json' // TODO: update
 import { Logger, getFairGasPrice } from '../utils'
-import wordListDefault from '../data/words.json'
+
 import { TransactionReceipt } from 'web3-core'
-import BigNumber from 'bignumber.js'
-import Decimal from 'decimal.js'
+
 import { Contract } from 'web3-eth-contract'
 
 interface Template {
   templateAddress: string
   isActive: boolean
 }
-// TODO: add updateMetadata function
+
 /**
- * Provides an interface for NFT DataTokens
+ * Provides an interface for ERC20 DataTokens Factory
  */
 export class ERC20Factory {
   public GASLIMIT_DEFAULT = 1000000
@@ -27,7 +25,7 @@ export class ERC20Factory {
   public startBlock: number
   public factory: Contract
   /**
-   * Instantiate DataTokens (independently of Ocean).
+   * Instantiate ERC20Factory (independently of Ocean).
    * @param {String} factoryAddress
    * @param {AbiItem | AbiItem[]} factoryABI
    * @param {Web3} web3
@@ -40,7 +38,7 @@ export class ERC20Factory {
     startBlock?: number
   ) {
     this.factoryAddress = factoryAddress
-    this.factoryABI = factoryABI || (defaultFactory721ABI.abi as AbiItem[])
+    this.factoryABI = factoryABI || (defaultFactoryABI.abi as AbiItem[])
     this.web3 = web3
     this.logger = logger
     this.startBlock = startBlock || 0
@@ -162,6 +160,37 @@ export class ERC20Factory {
         gas: estGas + 1,
         gasPrice: await getFairGasPrice(this.web3)
       })
+
+    return trxReceipt
+  }
+
+
+  /**
+   * Set the erc721 factory address - only ERC20 Factory OWNER
+   * @param {String} address
+   * @param {String} NFTFactoryAddress NFT factory address
+   * @return {Promise<TransactionReceipt>}
+   */
+   public async setERC721Factory(
+    address: string,
+    NFTFactoryAddress: string
+  ): Promise<TransactionReceipt> {
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.factory.methods
+        .setERC721Factory(NFTFactoryAddress)
+        .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      estGas = gasLimitDefault
+    }
+
+    // Invoke function of the contract
+    const trxReceipt = await this.factory.methods.setERC721Factory(NFTFactoryAddress).send({
+      from: address,
+      gas: estGas + 1,
+      gasPrice: await getFairGasPrice(this.web3)
+    })
 
     return trxReceipt
   }
