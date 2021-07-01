@@ -164,12 +164,12 @@ export class DataTokens {
     minter: string
   ): Promise<TransactionReceipt> {
     // Create ERC20 contract object
-    const contract721 = new this.web3.eth.Contract(this.datatokensABI, dataTokenAddress)
+    const datatoken = new this.web3.eth.Contract(this.datatokensABI, dataTokenAddress)
 
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await contract721.methods
+      estGas = await datatoken.methods
         .removeMinter(minter)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -178,7 +178,7 @@ export class DataTokens {
 
     // Invoke function of the contract
 
-    const trxReceipt = await contract721.methods.removeMinter(minter).send({
+    const trxReceipt = await datatoken.methods.removeMinter(minter).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
