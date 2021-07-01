@@ -87,7 +87,7 @@ export class FactoryRouter {
    * @param controller pool controller address
    * @return pool address
    */
-   public async createPoolWithFork(
+   public async deployPoolWithFork(
     account: string,
     controller: string
   ): Promise<string> {
@@ -101,7 +101,7 @@ export class FactoryRouter {
     let estGas
     try {
       estGas = await this.router.methods
-        .createPoolWithFork(controller)
+        .deployPoolWithFork(controller)
         .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
       this.logger.log('Error estimate gas deployPool')
@@ -109,11 +109,47 @@ export class FactoryRouter {
       estGas = gasLimitDefault
     }
     try {
-      const trxReceipt = await this.router.methods.createPoolWithFork(controller).send({ from: account, gas: estGas + 1 })
+      const trxReceipt = await this.router.methods.deployPoolWithFork(controller).send({ from: account, gas: estGas + 1 })
       poolAddress = trxReceipt.events.NewPoolFork.returnValues[0]
     } catch (e) {
       this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
     }
     return poolAddress
   }
+
+   /**
+   * Add a new token that, if present into the pool, won't charge 0.1% community fee - only Router Owner
+   * @param account user which triggers transaction
+   * @param oceanToken pool controller address
+   * @return txId
+   */
+    public async addOceanToken(
+        account: string,
+        oceanToken: string
+      ): Promise<TransactionReceipt> {
+        if (this.web3 === null) {
+          this.logger.error('ERROR: Web3 object is null')
+          return null
+        }
+    
+        let trxReceipt = null
+        const gasLimitDefault = this.GASLIMIT_DEFAULT
+        let estGas
+        try {
+          estGas = await this.router.methods
+            .addOceanToken(oceanToken)
+            .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+        } catch (e) {
+          this.logger.log('Error estimate gas deployPool')
+          this.logger.log(e)
+          estGas = gasLimitDefault
+        }
+        try {
+          trxReceipt = await this.router.methods.addOceanToken(oceanToken).send({ from: account, gas: estGas + 1 })
+         
+        } catch (e) {
+          this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
+        }
+        return trxReceipt
+      }
 }
