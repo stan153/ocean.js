@@ -69,12 +69,6 @@ export class Config {
   public factory721ABI?: AbiItem | AbiItem[]
 
   /**
-   * NFT Datatoken Address
-   * @type {string}
-   */
-  public nftDatatokenABI?: AbiItem | AbiItem[]
-
-  /**
    * NFT datatoken ABI
    * @type {string}
    */

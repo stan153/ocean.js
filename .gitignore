@@ -5,7 +5,7 @@ coverage/
 doc/
 test/**/*.js
 src/**/*.js
-
+trash/
 src/metadata\.json
 .idea
 .vscode
