@@ -1,8 +1,8 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/DTFactory.json' // TODO: update
-import defaultNFTDatatokenABI from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json' //TODO: update
+import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json' 
+import defaultNFTDatatokenABI from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC721Template.sol/ERC721Template.json' 
 import { Logger, getFairGasPrice } from '../utils'
 import wordListDefault from '../data/words.json'
 import { TransactionReceipt } from 'web3-core'
@@ -115,7 +115,7 @@ export class NFTDataToken {
     } catch (e) {
       estGas = gasLimitDefault
     }
-
+    
     // Invoke createToken function of the contract
     const trxReceipt = await factory721.methods
       .deployERC721Contract(name, symbol, metadataCacheUri, flags, templateIndex)
@@ -124,10 +124,11 @@ export class NFTDataToken {
         gas: estGas + 1,
         gasPrice: await getFairGasPrice(this.web3)
       })
-
+      console.log(trxReceipt)
     let tokenAddress = null
     try {
       tokenAddress = trxReceipt.events.TokenCreated.returnValues[0]
+      
     } catch (e) {
       this.logger.error(`ERROR: Failed to create datatoken : ${e.message}`)
     }

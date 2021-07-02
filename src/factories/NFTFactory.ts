@@ -1,8 +1,7 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/DTFactory.json' // TODO: update
-import defaultNFTDatatokenABI from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json' //TODO: update
+import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json' 
 import { Logger, getFairGasPrice } from '../utils'
 import wordListDefault from '../data/words.json'
 import { TransactionReceipt } from 'web3-core'
