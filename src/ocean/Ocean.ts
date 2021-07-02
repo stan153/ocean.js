@@ -6,6 +6,7 @@ import { MetadataCache } from '../metadatacache/MetadataCache'
 import { OnChainMetadata } from '../metadatacache/OnChainMetaData'
 import { Provider } from '../provider/Provider'
 import { DataTokens } from '../datatokens/Datatokens'
+import { NFTDataToken } from '../datatokens/NFTDatatoken'
 import { Network } from '../datatokens/Network'
 import { Config } from '../models/Config'
 import {
@@ -16,6 +17,8 @@ import { Compute } from './Compute'
 import { OceanPool } from '../balancer/OceanPool'
 import { OceanFixedRateExchange } from '../exchange/FixedRateExchange'
 import { OceanDispenser } from '../dispenser/Dispenser'
+import { NFTFactory } from '../factories/NFTFactory'
+import { ERC20Factory } from '../factories/ERC20Factory'
 
 /**
  * Main interface for Ocean Protocol.
@@ -48,13 +51,38 @@ export class Ocean extends Instantiable {
     instance.assets = await Assets.getInstance(instanceConfig)
     instance.compute = await Compute.getInstance(instanceConfig)
     instance.datatokens = new DataTokens(
-     // instanceConfig.config.factoryAddress,
-    //  instanceConfig.config.factoryABI,
       instanceConfig.config.datatokensABI,
       instanceConfig.config.web3Provider,
       instanceConfig.logger,
       instanceConfig.config.startBlock
     )
+
+    instance.nftDatatoken = new NFTDataToken(
+      instanceConfig.config.factory721Address,
+      instanceConfig.config.factory721ABI,
+      instanceConfig.config.nftDatatokenABI,
+      instanceConfig.config.web3Provider,
+      instanceConfig.logger,
+      instanceConfig.config.startBlock
+    )
+
+    instance.nftFactory = new NFTFactory(
+      instanceConfig.config.factory721Address,
+      instanceConfig.config.factory721ABI,
+      instanceConfig.config.web3Provider,
+      instanceConfig.logger,
+      instanceConfig.config.startBlock
+    )
+
+    instance.erc20Factory = new ERC20Factory(
+      instanceConfig.config.factory20Address,
+      instanceConfig.config.factory20ABI,
+      instanceConfig.config.web3Provider,
+      instanceConfig.logger,
+      instanceConfig.config.startBlock
+    )
+
+
     instance.pool = new OceanPool(
       instanceConfig.config.web3Provider,
       instanceConfig.logger,
@@ -152,6 +180,23 @@ export class Ocean extends Instantiable {
    * @type {DataTokens}
    */
   public datatokens: DataTokens
+
+  /**
+   * Ocean NFT datatoken submodule
+   * @type {NFTDataToken}
+   */
+  public nftDatatoken: NFTDataToken
+  /**
+   * Ocean NFT Factory submodule
+   * @type {NFTFactory}
+   */
+  public nftFactory: NFTFactory
+
+   /**
+   * Ocean ERC20 Datatokens Factory submodule
+   * @type {NFTFactory}
+   */
+    public erc20Factory: ERC20Factory
 
   /**
    * Ocean Pools submodule

@@ -39,22 +39,46 @@ export class Config {
   public oceanTokenAddress?: string
 
   /**
-   * Factory address
+   * ERC20 Factory address
    * @type {string}
    */
-  public factoryAddress?: string
+  public factory20Address?: string
 
   /**
-   * Factory ABI
+   * ERC20 Factory ABI
    * @type {string}
    */
-  public factoryABI?: AbiItem | AbiItem[]
+  public factory20ABI?: AbiItem | AbiItem[]
 
   /**
-   * datatokens ABI
+   * ERC20 Datatokens ABI
    * @type {string}
    */
   public datatokensABI?: AbiItem | AbiItem[]
+
+  /**
+   * NFT Factory address
+   * @type {string}
+   */
+  public factory721Address?: string
+
+  /**
+   * NFT Factory ABI
+   * @type {string}
+   */
+  public factory721ABI?: AbiItem | AbiItem[]
+
+  /**
+   * NFT Datatoken Address
+   * @type {string}
+   */
+  public nftDatatokenABI?: AbiItem | AbiItem[]
+
+  /**
+   * NFT datatoken ABI
+   * @type {string}
+   */
+  public nftDatatokenABI?: AbiItem | AbiItem[]
 
   /**
    * Pool Factory address

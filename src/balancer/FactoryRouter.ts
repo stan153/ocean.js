@@ -41,7 +41,7 @@ export class FactoryRouter {
    * @param tokens array of token addresses to be added into the pool
    * @param weights array of token weights (same order as tokens array)
    * @param swapFeePercentage swapFee for Liquidity Providers
-   * @param swapMarketFee fee that goes to marketPlace runner on each swap
+   * @param swapMarketFee fee that goes to marketplace runner on each swap
    * @return pool address
    */
   public async deployPool(
@@ -73,7 +73,7 @@ export class FactoryRouter {
     }
     try {
       const trxReceipt = await this.router.methods.deployPool(name, tokens, weights, swapFeePercentage, swapMarketFee, owner).send({ from: account, gas: estGas + 1 })
-      poolAddress = trxReceipt.events.NewPool.returnValues[0]// pooladdress = transactiondata.events.BPoolRegistered.returnValues[0]
+      poolAddress = trxReceipt.events.NewPool.returnValues[0]
     } catch (e) {
       this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
     }
@@ -104,7 +104,7 @@ export class FactoryRouter {
         .deployPoolWithFork(controller)
         .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
-      this.logger.log('Error estimate gas deployPool')
+      this.logger.log('Error estimate gas deployPoolWithFork')
       this.logger.log(e)
       estGas = gasLimitDefault
     }
@@ -112,7 +112,7 @@ export class FactoryRouter {
       const trxReceipt = await this.router.methods.deployPoolWithFork(controller).send({ from: account, gas: estGas + 1 })
       poolAddress = trxReceipt.events.NewPoolFork.returnValues[0]
     } catch (e) {
-      this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
+      this.logger.error(`ERROR: Failed to create new pool with fork: ${e.message}`)
     }
     return poolAddress
   }
@@ -140,7 +140,7 @@ export class FactoryRouter {
             .addOceanToken(oceanToken)
             .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
         } catch (e) {
-          this.logger.log('Error estimate gas deployPool')
+          this.logger.log('Error estimate gas addOceanToken')
           this.logger.log(e)
           estGas = gasLimitDefault
         }
@@ -148,7 +148,7 @@ export class FactoryRouter {
           trxReceipt = await this.router.methods.addOceanToken(oceanToken).send({ from: account, gas: estGas + 1 })
          
         } catch (e) {
-          this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
+          this.logger.error(`ERROR: Failed to add a new OceanToken: ${e.message}`)
         }
         return trxReceipt
       }
