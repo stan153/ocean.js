@@ -95,17 +95,15 @@ export class NFTDataToken {
 
     // Generate name & symbol if not present
     if (!name || !symbol) {
-      ;({ name, symbol } = this.generateDtName())
+      ({ name, symbol } = this.generateDtName())
     }
 
     // Create 721factory contract object
     const factory721 = new this.web3.eth.Contract(
       this.factory721ABI,
-      this.factory721Address,
-      {
-        from: address
-      }
+      this.factory721Address
     )
+    
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {

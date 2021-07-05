@@ -58,9 +58,10 @@ export class TestContractHandler {
 
   public async deployContracts(minter: string) {
     let estGas
-
-    // DEPLOY ERC20 TEMPLATE
-    // get est gascost
+   // console.log(this.ERC721TemplateBytecode)
+   // console.log(this.ERC20TemplateBytecode)
+   // DEPLOY ERC20 TEMPLATE
+   // get est gascost
     estGas = await this.ERC20Template.deploy({
       data: this.ERC20TemplateBytecode,
       arguments: []
@@ -150,7 +151,7 @@ export class TestContractHandler {
         .then(function (contract) {
           return contract.options.address
         })
-
+    //    // console.log(this.Metadata)
 
     // DEPLOY ERC721 FACTORY
     estGas = await this.ERC721Factory.deploy({
@@ -163,7 +164,7 @@ export class TestContractHandler {
     // deploy the contract and get it's address
     this.factory721Address = await this.ERC721Factory.deploy({
       data: this.ERC721FactoryBytecode,
-      arguments: [this.template721Address,communityCollector, this.factory20Address,this.metadataAddress]
+      arguments: [this.template721Address,communityCollector,this.factory20Address,this.metadataAddress]
     })
       .send({
         from: minter,
@@ -174,8 +175,8 @@ export class TestContractHandler {
         return contract.options.address
       })
 
-
-     // TODO: SET ERC721 Factory address in ERC20 Factory
+      
+    //  // TODO: SET ERC721 Factory address in ERC20 Factory
    
   }
 }

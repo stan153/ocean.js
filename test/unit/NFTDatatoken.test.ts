@@ -3,6 +3,7 @@ import { AbiItem } from 'web3-utils/types'
 import { TestContractHandler } from '../TestContractHandler'
 import { LoggerInstance } from '../../src/utils'
 import Web3 from 'web3'
+import { ethers } from "ethers";
 //import factory from '@oceanprotocol/contracts/artifacts/DTFactory.json'
 import ERC721Factory from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json'
 import ERC721Template from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC721Template.sol/ERC721Template.json'
@@ -14,9 +15,12 @@ import { NFTDataToken } from '../../src/datatokens/NFTDatatoken'
 import { NFTFactory } from '../../src/factories/NFTFactory'
 import { DT20Factory } from '../../src/factories/DT20Factory'
 
+
 const web3 = new Web3('http://127.0.0.1:8545')
 
-describe('DataTokens', () => {
+
+
+describe('NFTDatatoken', () => {
   let minter: string
   let newMinter: string
   let spender: string
@@ -50,6 +54,8 @@ describe('DataTokens', () => {
     newMinter = contracts.accounts[2]
     await contracts.deployContracts(minter)
     
+
+   
   })
 
   it('should initialize datatokens class', async () => {
@@ -78,14 +84,19 @@ describe('DataTokens', () => {
       web3,
       LoggerInstance
     )
+    const data = web3.utils.asciiToHex('SomeData');
+    const flags = web3.utils.asciiToHex('f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160');
       //console.log(nftDatatoken)
      // console.log(web3.eth.accounts)
      const result = await nftFactory.getCurrentTemplateCount()
      console.log(result.toString())
     await erc20Factory.setERC721Factory(minter,contracts.factory721Address)
     //  console.log(nftFactory)
-    const result1 = await nftFactory.createNFT(minter,'0x0','0x0')
+    const result1 = await nftFactory.addTokenTemplate(minter,contracts.template20Address)
     console.log(result1)
+    const result2 = await nftFactory.getCurrentTemplateCount()
+     console.log(result2.toString())
+     await nftFactory.createNFT(minter, data, flags)
     //assert(nftDatatoken !== null)
   })
 
