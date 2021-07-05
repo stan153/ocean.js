@@ -97,7 +97,7 @@ export class NFTFactory {
 
     // Generate name & symbol if not present
     if (!name || !symbol) {
-      ;({ name, symbol } = this.generateDtName())
+      ({ name, symbol } = this.generateDtName())
     }
 
     // Create 721factory contract object

@@ -18,7 +18,7 @@ import { OceanPool } from '../balancer/OceanPool'
 import { OceanFixedRateExchange } from '../exchange/FixedRateExchange'
 import { OceanDispenser } from '../dispenser/Dispenser'
 import { NFTFactory } from '../factories/NFTFactory'
-import { ERC20Factory } from '../factories/ERC20Factory'
+import { DT20Factory } from '../factories/DT20Factory'
 
 /**
  * Main interface for Ocean Protocol.
@@ -74,7 +74,7 @@ export class Ocean extends Instantiable {
       instanceConfig.config.startBlock
     )
 
-    instance.erc20Factory = new ERC20Factory(
+    instance.dt20Factory = new DT20Factory(
       instanceConfig.config.factory20Address,
       instanceConfig.config.factory20ABI,
       instanceConfig.config.web3Provider,
@@ -194,9 +194,9 @@ export class Ocean extends Instantiable {
 
    /**
    * Ocean ERC20 Datatokens Factory submodule
-   * @type {NFTFactory}
+   * @type {DT20Factory}
    */
-    public erc20Factory: ERC20Factory
+    public dt20Factory: DT20Factory
 
   /**
    * Ocean Pools submodule

@@ -1,7 +1,7 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/DTFactory.json' // TODO: update
+import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/contracts/ERC20Factory.sol/ERC20Factory.json' 
 import { Logger, getFairGasPrice } from '../utils'
 
 import { TransactionReceipt } from 'web3-core'
@@ -16,7 +16,7 @@ interface Template {
 /**
  * Provides an interface for ERC20 DataTokens Factory
  */
-export class ERC20Factory {
+export class DT20Factory {
   public GASLIMIT_DEFAULT = 1000000
   public factoryAddress: string
   public factoryABI: AbiItem | AbiItem[]
