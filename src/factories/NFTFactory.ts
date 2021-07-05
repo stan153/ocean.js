@@ -1,7 +1,7 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json' 
+import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json'
 import { Logger, getFairGasPrice } from '../utils'
 import wordListDefault from '../data/words.json'
 import { TransactionReceipt } from 'web3-core'
@@ -33,9 +33,9 @@ export class NFTFactory {
    */
   constructor(
     factory721Address: string,
-    factory721ABI: AbiItem | AbiItem[],
     web3: Web3,
     logger: Logger,
+    factory721ABI?: AbiItem | AbiItem[],
     startBlock?: number
   ) {
     this.factory721Address = factory721Address
@@ -94,13 +94,12 @@ export class NFTFactory {
     templateIndex?: number
   ): Promise<string> {
     if (!templateIndex) templateIndex = 1
-    console.log(this.factory721)
+
     // Generate name & symbol if not present
     if (!name || !symbol) {
-      ({ name, symbol } = this.generateDtName())
+      ;({ name, symbol } = this.generateDtName())
     }
 
-    
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -158,7 +157,7 @@ export class NFTFactory {
    * Add a new erc721 token template - only factory Owner
    * @param {String} address
    * @param {String} templateAddress template address to add
-   * @return {Promise<TransactionReceipt>} 
+   * @return {Promise<TransactionReceipt>}
    */
   public async addTokenTemplate(
     address: string,
@@ -249,5 +248,4 @@ export class NFTFactory {
 
     return trxReceipt
   }
-
 }

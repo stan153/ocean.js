@@ -3,7 +3,7 @@ import { AbiItem } from 'web3-utils/types'
 import { TestContractHandler } from '../TestContractHandler'
 import { LoggerInstance } from '../../src/utils'
 import Web3 from 'web3'
-import { ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 //import factory from '@oceanprotocol/contracts/artifacts/DTFactory.json'
 import ERC721Factory from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json'
 import ERC721Template from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC721Template.sol/ERC721Template.json'
@@ -21,14 +21,15 @@ const web3 = new Web3('http://127.0.0.1:8545')
 
 
 describe('NFTDatatoken', () => {
-  let minter: string
-  let newMinter: string
-  let spender: string
+  let nftOwner: string
+  let user1: string
+  let user2: string
   let balance: string
   let contracts: TestContractHandler
   let nftDatatoken: NFTDataToken
   let nftFactory : NFTFactory
   let erc20Factory: DT20Factory
+  let newNFTAddress : string
   let tokenAddress: string
   const tokenAmount = '100'
   const blob = 'https://example.com/dataset-1'
@@ -49,55 +50,127 @@ describe('NFTDatatoken', () => {
       web3
     )
     await contracts.getAccounts()
-    minter = contracts.accounts[0]
-    spender = contracts.accounts[1]
-    newMinter = contracts.accounts[2]
-    await contracts.deployContracts(minter)
+    nftOwner = contracts.accounts[0]
+    user1 = contracts.accounts[1]
+    user2 = contracts.accounts[2]
+    await contracts.deployContracts(nftOwner)
     
 
    
   })
 
-  it('should initialize datatokens class', async () => {
-    console.log(contracts.factory721Address)
-    console.log(contracts.template721Address)
-    console.log(contracts.metadataAddress)
-    console.log(contracts.factory20Address)
-    console.log(contracts.template20Address)
-    nftFactory = new NFTFactory(
-      contracts.factory721Address,
-      ERC721Factory.abi as AbiItem[],
-      web3,
-      LoggerInstance
-    )
-    nftDatatoken = new NFTDataToken(
-      contracts.template721Address,
-      ERC721Factory.abi as AbiItem[],
-      ERC721Template.abi as AbiItem[],
-      web3,
-      LoggerInstance
-    )
-
+  it('should set ERC721Factory on ERC20Factory', async () => {
     erc20Factory = new DT20Factory(
       contracts.factory20Address,
       ERC20Factory.abi as AbiItem[],
       web3,
       LoggerInstance
     )
+    
+    await erc20Factory.setERC721Factory(nftOwner,contracts.factory721Address)
+  })
+
+  it('should initialize NFTFactory instance and create a new NFT', async () => {
+    
+    nftFactory = new NFTFactory(
+      contracts.factory721Address,
+      web3,
+      LoggerInstance,
+     // ERC721Factory.abi as AbiItem[],
+      
+    )
+   
     const data = web3.utils.asciiToHex('SomeData');
     const flags = web3.utils.asciiToHex('f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160');
-      //console.log(nftDatatoken)
-     // console.log(web3.eth.accounts)
-     const result = await nftFactory.getCurrentTemplateCount()
-     console.log(result.toString())
-    await erc20Factory.setERC721Factory(minter,contracts.factory721Address)
-    //  console.log(nftFactory)
-    const result1 = await nftFactory.addTokenTemplate(minter,contracts.template20Address)
-    console.log(result1)
-    const result2 = await nftFactory.getCurrentTemplateCount()
-     console.log(result2.toString())
-     await nftFactory.createNFT(minter, data, flags)
-    //assert(nftDatatoken !== null)
+    
+    newNFTAddress = await nftFactory.createNFT(nftOwner, data, flags)
+    //console.log(newNFTAddress)
+    
+    nftDatatoken = new NFTDataToken(
+      newNFTAddress,    
+      web3,
+      LoggerInstance,
+      // ERC721Template.abi as AbiItem[],
+    )
+
+  })
+
+  it('should create a new ERC20 DT from NFT contract', async () => {
+    
+  
+    await nftDatatoken.addERC20Deployer(nftOwner,nftOwner)
+    const erc20Address = await nftDatatoken.createERC20(nftOwner,nftOwner)
+    console.log(erc20Address)
+  })
+
+  it('should add a new Manager', async () => {
+    
+    assert((await nftDatatoken.getPermissions(user1)).manager == false)
+    
+    await nftDatatoken.addManager(nftOwner,user1)
+    
+    assert((await nftDatatoken.getPermissions(user1)).manager == true)
+  })
+
+  it('should remove a Manager', async () => {
+    
+    assert((await nftDatatoken.getPermissions(user1)).manager == true)
+    
+    await nftDatatoken.removeManager(nftOwner,user1)
+    
+    assert((await nftDatatoken.getPermissions(user1)).manager == false)
+  })
+
+
+  it('should call executeCall from Manager', async () => {
+    
+    const operation = 0
+    const to = user2
+    const value = '10'
+    const data = web3.utils.asciiToHex('SomeData');
+    
+    await nftDatatoken.executeCall(nftOwner,operation,to,value,data)
+    
+  })
+
+  it('should setNewData if Store updater', async () => {
+    await nftDatatoken.addStoreUpdater(nftOwner,user1)
+    const key = web3.utils.keccak256('ARBITRARY_KEY');
+    const value = web3.utils.asciiToHex('SomeData')
+    
+    await nftDatatoken.setNewData(user1,key,value)
+
+    assert(await nftDatatoken.getData(key) == value)
+    
+  })
+
+  it('should cleanPermissions if NFTOwner', async () => {
+    assert((await nftDatatoken.getPermissions(user1)).store == true)
+    assert((await nftDatatoken.getPermissions(nftOwner)).manager == true)
+    
+    await nftDatatoken.cleanPermissions(nftOwner)
+   
+    assert((await nftDatatoken.getPermissions(user1)).store == false)
+    assert((await nftDatatoken.getPermissions(nftOwner)).manager == false)
+    
+    // NOW WE ReADD nftOwner as manager
+    await nftDatatoken.addManager(nftOwner,nftOwner) 
+    assert((await nftDatatoken.getPermissions(nftOwner)).manager == true)
+
+  })
+
+  it('should add and remove from Store Updater if Manager', async () => {
+    assert((await nftDatatoken.getPermissions(user1)).store == false)
+  
+    
+    await nftDatatoken.addStoreUpdater(nftOwner,user1)
+   
+    assert((await nftDatatoken.getPermissions(user1)).store == true)
+   
+    
+    await nftDatatoken.removeStoreUpdater(nftOwner,user1)
+
+    assert((await nftDatatoken.getPermissions(user1)).store == false)
   })
 
   
