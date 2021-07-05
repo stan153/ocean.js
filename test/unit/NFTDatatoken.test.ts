@@ -33,7 +33,15 @@ describe('NFTDatatoken', () => {
   let tokenAddress: string
   const tokenAmount = '100'
   const blob = 'https://example.com/dataset-1'
+  const nftName = 'NFT'
+  const nftSymbol = 'NFTSymbol'
+  const nftTemplateIndex = 1
+  const data = web3.utils.asciiToHex('SomeData');
+  const flags = web3.utils.asciiToHex('f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160');
 
+  // setNewData() arguments
+  const key = web3.utils.keccak256('ARBITRARY_KEY');
+  const value = web3.utils.asciiToHex('SomeData')
   // TODO: complete NFT Datatoken unit test
   it('should deploy contracts', async () => {
     contracts = new TestContractHandler(
@@ -80,10 +88,9 @@ describe('NFTDatatoken', () => {
       
     )
    
-    const data = web3.utils.asciiToHex('SomeData');
-    const flags = web3.utils.asciiToHex('f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160');
     
-    newNFTAddress = await nftFactory.createNFT(nftOwner, data, flags)
+    
+    newNFTAddress = await nftFactory.createNFT(nftOwner,data, flags, nftName,nftSymbol,nftTemplateIndex)
     //console.log(newNFTAddress)
     
     nftDatatoken = new NFTDataToken(
@@ -135,8 +142,7 @@ describe('NFTDatatoken', () => {
 
   it('should setNewData if Store updater', async () => {
     await nftDatatoken.addStoreUpdater(nftOwner,user1)
-    const key = web3.utils.keccak256('ARBITRARY_KEY');
-    const value = web3.utils.asciiToHex('SomeData')
+   
     
     await nftDatatoken.setNewData(user1,key,value)
 
@@ -171,6 +177,51 @@ describe('NFTDatatoken', () => {
     await nftDatatoken.removeStoreUpdater(nftOwner,user1)
 
     assert((await nftDatatoken.getPermissions(user1)).store == false)
+  })
+
+  it('should add and remove from ERC20deployer if Manager', async () => {
+    assert((await nftDatatoken.getPermissions(user1)).deployERC20 == false)
+  
+    
+    await nftDatatoken.addERC20Deployer(nftOwner,user1)
+   
+    assert((await nftDatatoken.getPermissions(user1)).deployERC20 == true)
+   
+    
+    await nftDatatoken.removeERC20Deployer(nftOwner,user1)
+
+    assert((await nftDatatoken.getPermissions(user1)).deployERC20 == false)
+  })
+
+  it('should add and remove from Metadata Updater if Manager', async () => {
+    assert((await nftDatatoken.getPermissions(user1)).updateMetadata == false)
+  
+    
+    await nftDatatoken.addMetadataUpdater(nftOwner,user1)
+   
+    assert((await nftDatatoken.getPermissions(user1)).updateMetadata == true)
+   
+    
+    await nftDatatoken.removeMetadataUpdater(nftOwner,user1)
+
+    assert((await nftDatatoken.getPermissions(user1)).updateMetadata == false)
+  })
+
+  it('should succed to use view functions', async () => {
+    
+    assert(await nftDatatoken.getName() == nftName)
+    assert(await nftDatatoken.getSymbol() == nftSymbol)
+    assert(await nftDatatoken.getOwner() == nftOwner)
+    
+    
+    assert((await nftDatatoken.getPermissions(user2)).manager == false)
+    assert((await nftDatatoken.getPermissions(user2)).updateMetadata == false)
+    assert((await nftDatatoken.getPermissions(user2)).deployERC20 == false)
+    assert((await nftDatatoken.getPermissions(user2)).store == false)
+    assert((await nftDatatoken.getPermissions(user2)).v3Minter == false)
+   
+    
+    assert(await nftDatatoken.getData(key) == value)
   })
 
   
