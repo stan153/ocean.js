@@ -2,7 +2,7 @@ import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
 //import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/DTFactory.json' // TODO update
-import defaultDatatokensABI from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json' // TODO update
+import defaultDatatokensABI from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json'  // TODO update
 import { Logger, getFairGasPrice } from '../utils'
 import { TransactionReceipt } from 'web3-core'
 import BigNumber from 'bignumber.js'
@@ -25,9 +25,9 @@ export class DataTokens {
    * @param {Web3} web3
    */
   constructor(
-    datatokensABI: AbiItem | AbiItem[],
     web3: Web3,
     logger: Logger,
+    datatokensABI?: AbiItem | AbiItem[],
     startBlock?: number
   ) {
 

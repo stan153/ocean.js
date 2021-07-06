@@ -368,6 +368,8 @@ export class NFTDataToken {
 
     return trxReceipt
   }
+  // V3 INTEGRATION 
+  
 
   /**
    * Integration for V3 erc20 datatoken - Only erc20.minter() can do it.

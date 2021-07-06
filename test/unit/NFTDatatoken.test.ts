@@ -21,18 +21,15 @@ describe('NFTDatatoken', () => {
   let nftOwner: string
   let user1: string
   let user2: string
-  let balance: string
   let contracts: TestContractHandler
   let nftDatatoken: NFTDataToken
   let nftFactory: NFTFactory
   let erc20Factory: DT20Factory
   let newNFTAddress: string
   let v3ContractAddress: string
-  let tokenAddress: string
   let v3Contract
 
-  const tokenAmount = '100'
-  const blob = 'https://example.com/dataset-1'
+  
   const nftName = 'NFT'
   const nftSymbol = 'NFTSymbol'
   const nftTemplateIndex = 1
@@ -45,9 +42,8 @@ describe('NFTDatatoken', () => {
   const key = web3.utils.keccak256('ARBITRARY_KEY')
   const value = web3.utils.asciiToHex('SomeData')
 
-  const v3Datatoken = '0xa2B8b3aC4207CFCCbDe4Ac7fa40214fd00A2BA71'
-  const v3DTOwner = '0x12BD31628075C20919BA838b89F414241b8c4869'
-  // TODO: add V3 Integration
+ 
+  // TODO: complete unit test
   it('should deploy contracts', async () => {
     contracts = new TestContractHandler(
       ERC721Factory.abi as AbiItem[],
@@ -109,13 +105,14 @@ describe('NFTDatatoken', () => {
     )
   })
 
-  it('should create a new ERC20 DT from NFT contract', async () => {
+  it('#createERC20 - should create a new ERC20 DT from NFT contract', async () => {
     await nftDatatoken.addERC20Deployer(nftOwner, nftOwner)
     const erc20Address = await nftDatatoken.createERC20(nftOwner, nftOwner)
+    assert(erc20Address != null)
     console.log(erc20Address)
   })
 
-  it('should add a new Manager', async () => {
+  it('#addManager - should add a new Manager', async () => {
     assert((await nftDatatoken.getPermissions(user1)).manager == false)
 
     await nftDatatoken.addManager(nftOwner, user1)
@@ -123,7 +120,7 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(user1)).manager == true)
   })
 
-  it('should remove a Manager', async () => {
+  it('#removeManager - should remove a Manager', async () => {
     assert((await nftDatatoken.getPermissions(user1)).manager == true)
 
     await nftDatatoken.removeManager(nftOwner, user1)
@@ -131,7 +128,7 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(user1)).manager == false)
   })
 
-  it('should call executeCall from Manager', async () => {
+  it('#executeCall - should call executeCall from Manager', async () => {
     const operation = 0
     const to = user2
     const value = '10'
@@ -140,7 +137,7 @@ describe('NFTDatatoken', () => {
     await nftDatatoken.executeCall(nftOwner, operation, to, value, data)
   })
 
-  it('should setNewData if Store updater', async () => {
+  it('#setNewData - should setNewData if Store updater', async () => {
     await nftDatatoken.addStoreUpdater(nftOwner, user1)
 
     await nftDatatoken.setNewData(user1, key, value)
@@ -148,7 +145,7 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getData(key)) == value)
   })
 
-  it('should cleanPermissions if NFTOwner', async () => {
+  it('#cleanPermissions - should cleanPermissions if NFTOwner', async () => {
     assert((await nftDatatoken.getPermissions(user1)).store == true)
     assert((await nftDatatoken.getPermissions(nftOwner)).manager == true)
 
@@ -162,7 +159,7 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(nftOwner)).manager == true)
   })
 
-  it('should add and remove from Store Updater if Manager', async () => {
+  it('#addStoreUpdater #removeStoreUpdater - should add and remove from Store Updater if Manager', async () => {
     assert((await nftDatatoken.getPermissions(user1)).store == false)
 
     await nftDatatoken.addStoreUpdater(nftOwner, user1)
@@ -174,7 +171,7 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(user1)).store == false)
   })
 
-  it('should add and remove from ERC20deployer if Manager', async () => {
+  it('#addERC20Deployer #removeERC20Deployer - should add and remove from ERC20deployer if Manager', async () => {
     assert((await nftDatatoken.getPermissions(user1)).deployERC20 == false)
 
     await nftDatatoken.addERC20Deployer(nftOwner, user1)
@@ -186,7 +183,7 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(user1)).deployERC20 == false)
   })
 
-  it('should add and remove from Metadata Updater if Manager', async () => {
+  it('#addMetadataUpdate #removeMetadataUpdate - should add and remove from Metadata Updater if Manager', async () => {
     assert((await nftDatatoken.getPermissions(user1)).updateMetadata == false)
 
     await nftDatatoken.addMetadataUpdater(nftOwner, user1)
@@ -212,7 +209,7 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getData(key)) == value)
   })
 
-
+  // TODO: add function into NFTDatatoken for proposeMinter?
   it('it proposeMinter() for V3 Integration', async () => {
     
   // CREATE MOCK V3 DT WHERE NFT OWNER IS ALSO OWNER/MINTER
@@ -237,18 +234,88 @@ describe('NFTDatatoken', () => {
 
   })
 
-  it('nftOwner calls wrapV3DT and set himself as minter at the 721 level', async () => {
+  it('#wrapV3DT - nftOwner calls wrapV3DT and set himself as minter at the 721 level', async () => {
     
     
    await nftDatatoken.wrapV3DT(nftOwner,v3ContractAddress,nftOwner)
 
   })
 
-  it('nftOwner has v3Minter permission and mint some V3ERC20 to user2', async () => {
+  it('#mintV3DT - nftOwner has v3Minter permission and mint some V3ERC20 to user2', async () => {
     assert((await nftDatatoken.getPermissions(nftOwner)).v3Minter == true)
     
     await nftDatatoken.mintV3DT(nftOwner,v3ContractAddress,user2,'10')
 
     assert((await v3Contract.methods.balanceOf(user2).call()).toString() == nftDatatoken.toWei('10'))
+   })
+
+   it('#addV3Minter - manager succeed to add a new V3 minter, then new v3Minter mints', async () => {
+    assert((await nftDatatoken.getPermissions(user2)).v3Minter == false)
+   
+    await nftDatatoken.addV3Minter(nftOwner,user2)
+    
+    assert((await nftDatatoken.getPermissions(user2)).v3Minter == true)
+    
+    await nftDatatoken.mintV3DT(user2,v3ContractAddress,user1,'10')
+
+    assert((await v3Contract.methods.balanceOf(user1).call()).toString() == nftDatatoken.toWei('10'))
+   })
+
+   it('#removeV3Minter - manager succeed to remove a V3 minter', async () => {
+    assert((await nftDatatoken.getPermissions(user2)).v3Minter == true)
+   
+    await nftDatatoken.removeV3Minter(nftOwner,user2)
+    
+    assert((await nftDatatoken.getPermissions(user2)).v3Minter == false)
+    
+   
+   })
+
+   it('#setDataV3 - v3 Minter should succed to set DataV3 (update metadata)', async () => {
+    const keyV3 = web3.utils.keccak256(v3ContractAddress)
+    const newValue = web3.utils.asciiToHex('SomeData')
+    
+   
+    assert(await nftDatatoken.getData(keyV3) == null)
+   
+    await nftDatatoken.setDataV3(nftOwner,v3ContractAddress, newValue, flags,data)
+    
+    assert(await nftDatatoken.getData(keyV3) == newValue)
+    
+   
+   })
+
+   it('#transferNFT - should transfer the NFT and clean all permissions, set new owner as manager', async () => {
+    
+    await nftDatatoken.addManager(nftOwner,user2)
+    await nftDatatoken.addMetadataUpdater(nftOwner,user1)
+    await nftDatatoken.addStoreUpdater(user2, user1)
+    await nftDatatoken.addERC20Deployer(user2, user1)
+
+    assert((await nftDatatoken.getPermissions(user2)).manager == true)
+    assert((await nftDatatoken.getPermissions(nftOwner)).manager == true)
+    assert((await nftDatatoken.getPermissions(user1)).manager == false)
+    assert((await nftDatatoken.getPermissions(user1)).updateMetadata == true)
+    assert((await nftDatatoken.getPermissions(user1)).store == true)
+    assert((await nftDatatoken.getPermissions(user1)).deployERC20 == true)
+    assert((await nftDatatoken.getPermissions(nftOwner)).v3Minter == true)
+
+    assert(await nftDatatoken.getOwner() == nftOwner)
+
+    await nftDatatoken.transferNFT(nftOwner,user1)
+
+    assert(await nftDatatoken.getOwner() == user1)
+
+    assert((await nftDatatoken.getPermissions(user2)).manager == false)
+    assert((await nftDatatoken.getPermissions(nftOwner)).manager == false)
+    // NEW OWNER IS SET AS MANAGER WHEN TRANSFERRING
+    assert((await nftDatatoken.getPermissions(user1)).manager == true)
+    assert((await nftDatatoken.getPermissions(user1)).updateMetadata == false)
+    assert((await nftDatatoken.getPermissions(user1)).store == false)
+    assert((await nftDatatoken.getPermissions(user1)).deployERC20 == false)
+    assert((await nftDatatoken.getPermissions(nftOwner)).v3Minter == false)
+
+
+
    })
 })
