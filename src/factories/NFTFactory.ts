@@ -136,6 +136,8 @@ export class NFTFactory {
     return trxReceipt
   }
 
+  
+
   /** Get Current Template Count
    * @return {Promise<number>} Number of Template added to this factory
    */

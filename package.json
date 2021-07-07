@@ -25,7 +25,7 @@
     "changelog": "auto-changelog -p",
     "prepublishOnly": "npm run build",
     "test": "npm run test:unit:cover && npm run test:integration:cover",
-    "test:unit": "mocha --config=test/unit/.mocharc.json --node-env=test --exit 'test/unit/NFTDatatoken.test.ts'",
+    "test:unit": "mocha --config=test/unit/.mocharc.json --node-env=test --exit 'test/unit/factories/DT20Factory.test.ts'",
     "test:unit:cover": "nyc --report-dir coverage/unit npm run test:unit",
     "test:integration": "mocha --config=test/integration/.mocharc.json --node-env=test --exit 'test/integration/**/*.test.ts'",
     "test:integration:cover": "nyc --report-dir coverage/integration --no-clean npm run test:integration"

@@ -32,9 +32,10 @@ export class DT20Factory {
    */
   constructor(
     factoryAddress: string,
-    factoryABI: AbiItem | AbiItem[],
+    
     web3: Web3,
     logger: Logger,
+    factoryABI?: AbiItem | AbiItem[],
     startBlock?: number
   ) {
     this.factoryAddress = factoryAddress
@@ -70,6 +71,13 @@ export class DT20Factory {
     return template
   }
 
+   /** Get ERC721Factory Address
+   * @return {Promise<string>} NFT Factory Address
+   */
+    public async getNFTFactory(): Promise<string> {
+      const trxReceipt = await this.factory.methods.erc721Factory().call()
+      return trxReceipt
+    }
   /**
    * Add a new erc20 token template - only factory Owner
    * @param {String} address

@@ -8,7 +8,6 @@ import ERC721Template from '@oceanprotocol/contracts/artifacts/contracts/templat
 import ERC20Factory from '@oceanprotocol/contracts/artifacts/contracts/ERC20Factory.sol/ERC20Factory.json'
 import Metadata from '@oceanprotocol/contracts/artifacts/contracts/metadata/Metadata.sol/Metadata.json'
 import ERC20Template from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json'
-import MockOldDT from '@oceanprotocol/contracts/artifacts/contracts/utils/mock/MockOldDT.sol/MockOldDT.json'
 import { NFTDataToken } from '../../../src/datatokens/NFTDatatoken'
 import { NFTFactory } from '../../../src/factories/NFTFactory'
 import { DT20Factory } from '../../../src/factories/DT20Factory'
@@ -36,9 +35,6 @@ describe('NFT Factory test', () => {
     'f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160'
   )
 
-  // setNewData() arguments
-  const key = web3.utils.keccak256('ARBITRARY_KEY')
-  const value = web3.utils.asciiToHex('SomeData')
 
   // TODO: complete unit test
   it('should deploy contracts', async () => {
@@ -65,7 +61,7 @@ describe('NFT Factory test', () => {
   it('should set ERC721Factory on ERC20Factory', async () => {
     erc20Factory = new DT20Factory(
       contracts.factory20Address,
-      ERC20Factory.abi as AbiItem[],
+      //ERC20Factory.abi as AbiItem[],
       web3,
       LoggerInstance
     )
@@ -73,7 +69,7 @@ describe('NFT Factory test', () => {
     await erc20Factory.setERC721Factory(factoryOwner, contracts.factory721Address)
   })
 
-  it('should initialize NFTFactory instance and create a new NFT', async () => {
+  it('should initialize NFTFactory instance, create a new NFT and initializing a NFT dt class', async () => {
     nftFactory = new NFTFactory(
       contracts.factory721Address,
       web3,
@@ -99,7 +95,7 @@ describe('NFT Factory test', () => {
     )
   })
 
-  it('#createNFT - should create a new NFT Contract without specificifing name, symbol and templateIndex', async () => {
+  it('#createNFT - should create a second NFT Contract without specificifing name, symbol and templateIndex', async () => {
     newNFTAddress = await nftFactory.createNFT(nftOwner, data, flags)
 
     newNFTDatatoken = new NFTDataToken(
@@ -111,18 +107,6 @@ describe('NFT Factory test', () => {
 
     assert((await newNFTDatatoken.getName()) != null)
     assert((await newNFTDatatoken.getSymbol()) != null)
-  })
-
-  it('#getCurrentNFTCount - should succeed to use view function', async () => {
-    assert((await nftFactory.getCurrentNFTCount()) == 3)
-
-    assert((await nftFactory.getCurrentTemplateCount()) == 1)
-
-    assert(
-      (await nftFactory.getTokenTemplate(1)).templateAddress ==
-        contracts.template721Address
-    )
-    assert((await nftFactory.getTokenTemplate(1)).isActive == true)
   })
 
   it('#getCurrentNFTCount - should succeed to use view function', async () => {
