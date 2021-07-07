@@ -1,7 +1,7 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 import { Logger } from '../utils'
-import defaultRouterABI from '@oceanprotocol/contracts/artifacts/BFactory.json' // TODO : update
+import defaultRouterABI from '@oceanprotocol/contracts/artifacts/contracts/pools/factories/OceanPoolFactoryRouter.sol/OceanPoolFactoryRouter.json' // TODO : update
 import { TransactionReceipt } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
 
@@ -14,7 +14,7 @@ export class FactoryRouter {
   public router: Contract
 
   /**
-   * Instantiate DataTokens (independently of Ocean).
+   * Instantiate FactoryRouter (independently of Ocean).
    * @param {String} routerAddress
    * @param {AbiItem | AbiItem[]} routerABI
    * @param {Web3} web3
@@ -23,8 +23,9 @@ export class FactoryRouter {
   constructor(
     web3: Web3,
     logger: Logger,
-    routerABI: AbiItem | AbiItem[] = null,
-    routerAddress: string = null
+    routerAddress: string = null,
+    routerABI?: AbiItem | AbiItem[]
+    
   ) {
     this.web3 = web3
     this.routerAddress = routerAddress

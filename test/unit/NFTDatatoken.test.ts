@@ -71,7 +71,7 @@ describe('NFTDatatoken', () => {
   it('should set ERC721Factory on ERC20Factory', async () => {
     erc20Factory = new DT20Factory(
       contracts.factory20Address,
-      ERC20Factory.abi as AbiItem[],
+     // ERC20Factory.abi as AbiItem[],
       web3,
       LoggerInstance
     )
