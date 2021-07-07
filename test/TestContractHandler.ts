@@ -11,6 +11,7 @@ export class TestContractHandler {
   public ERC20Template: Contract
   public ERC721Template: Contract
   public Metadata: Contract
+  
 
   public ERC721FactoryBytecode: string
   public ERC20FactoryBytecode: string
