@@ -39,8 +39,8 @@ describe('DT20 Test', () => {
     'f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160'
   )
 
-  // setNewData() arguments
-  const key = web3.utils.keccak256('ARBITRARY_KEY')
+  // setData() argument
+ 
   const value = web3.utils.asciiToHex('SomeData')
 
  
@@ -108,14 +108,80 @@ describe('DT20 Test', () => {
 
   it('should create a new ERC20 DT Contract from NFT contract', async () => {
     await nftDatatoken.addERC20Deployer(nftOwner, nftOwner)
-    erc20Address = await nftDatatoken.createERC20(nftOwner, nftOwner)
+    erc20Address = await nftDatatoken.createERC20(nftOwner, nftOwner,'1000')
     assert(erc20Address != null)
     console.log(erc20Address)
   })
 
   it('should initialize DT20 Instance', async () => {
-   
+    erc20DT = new DataTokens(erc20Address,web3,LoggerInstance)
   })
+
+  it('#mint - should mint DT20 to user1, if Minter', async () => {
+    assert(((await erc20DT.getPermissions(nftOwner)).minter) == true)
+    await erc20DT.mint(nftOwner,'10',user1)
+    
+    assert(await erc20DT.balance(user1) == '10')
+  })
+
+  it('#addMinter - should add user1 as minter, if ERC20Deployer permission (at 721 level), the user1 mints', async () => {
+    assert(((await nftDatatoken.getPermissions(nftOwner)).deployERC20) == true)
+    assert(((await erc20DT.getPermissions(user1)).minter) == false)
+    
+    await erc20DT.addMinter(nftOwner,user1)
+
+    assert(((await erc20DT.getPermissions(user1)).minter) == true)
+
+    await erc20DT.mint(user1,'10',nftOwner)
+    
+    assert(await erc20DT.balance(nftOwner) == '10')
+  })
+
+  it('#removeMinter - should remove user1 as minter, if ERC20Deployer permission (at 721 level)', async () => {
+    assert(((await nftDatatoken.getPermissions(nftOwner)).deployERC20) == true)
+    assert(((await erc20DT.getPermissions(user1)).minter) == true)
+    
+    await erc20DT.removeMinter(nftOwner,user1)
+
+    assert(((await erc20DT.getPermissions(user1)).minter) == false)
+
+  
+  })
+
+  it('#setData - should set a value into 725Y standard, if ERC20Deployer permission (at 721 level)', async () => {
+    assert(((await nftDatatoken.getPermissions(nftOwner)).deployERC20) == true)
+    
+    await erc20DT.setData(nftOwner,value)
+
+    const key = web3.utils.keccak256(erc20Address)
+    assert(await nftDatatoken.getData(key) == value)
+    
+  
+  })
+
+  it('#setFeeCollector - should set a new feeCollector, if NFT Owner', async () => {
+   // IF NOT SET, feeCollector is NFT OWNER
+    assert(await erc20DT.getFeeCollector() == nftOwner)
+    await erc20DT.setFeeCollector(nftOwner,user1)
+    assert(await erc20DT.getFeeCollector() == user1)
+    
+  
+  })
+
+  it('#cleanPermissions - should clean permissions at ERC20 level and set Fee Collector as NFT Owner, if NFT Owner', async () => {
+     
+     assert(((await erc20DT.getPermissions(nftOwner)).minter) == true)
+
+     assert(await erc20DT.getFeeCollector() == user1)
+
+     await erc20DT.cleanPermissions(nftOwner)
+
+     assert(await erc20DT.getFeeCollector() == nftOwner)
+
+     assert(((await erc20DT.getPermissions(nftOwner)).minter) == false)
+     
+   
+   })
 
   
 })

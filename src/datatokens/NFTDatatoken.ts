@@ -105,13 +105,13 @@ export class NFTDataToken {
     address: string,
     //nftAddress: string,
     minter: string,
+    cap: string,
     name?: string,
     symbol?: string,
-    cap?: string,
     templateIndex?: number
   ): Promise<string> {
     if (!templateIndex) templateIndex = 1
-    if (!cap) cap = '1000'
+    //if (!cap) cap = '1000'
 
     // Generate name & symbol if not present
     if (!name || !symbol) {
@@ -126,7 +126,7 @@ export class NFTDataToken {
     let estGas
     try {
       estGas = await this.contract721.methods
-        .createERC20(name, symbol, cap, templateIndex, minter)
+        .createERC20(name, symbol, this.toWei(cap), templateIndex, minter)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
       estGas = gasLimitDefault
@@ -134,7 +134,7 @@ export class NFTDataToken {
 
     // Invoke createToken function of the contract
     const trxReceipt = await this.contract721.methods
-      .createERC20(name, symbol, cap, templateIndex, minter)
+      .createERC20(name, symbol, this.toWei(cap), templateIndex, minter)
       .send({
         from: address,
         gas: estGas + 1,

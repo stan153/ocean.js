@@ -9,6 +9,12 @@ import BigNumber from 'bignumber.js'
 import Decimal from 'decimal.js'
 import { Contract } from 'web3-eth-contract'
 
+interface Roles {
+  minter: boolean;
+  feeManager: boolean; //is it needed right now?
+  // TODO
+  // role for fee manager or collector
+}
 /**
  * Provides an interface to ERC20 DataTokens
  */
@@ -92,7 +98,7 @@ export class DataTokens {
     toAddress?: string
   ): Promise<TransactionReceipt> {
     
-    const capAvailble = await this.getCap(this.dt20Address)
+    const capAvailble = await this.getCap()
     if (new Decimal(capAvailble).gte(amount)) {
       const gasLimitDefault = this.GASLIMIT_DEFAULT
       let estGas
@@ -316,7 +322,7 @@ export class DataTokens {
     amount: string,
     address: string
   ): Promise<TransactionReceipt> {
-    return this.transferToken(this.dt20Address, toAddress, amount, address)
+    return this.transferToken( toAddress, amount, address)
   }
 
   /**
@@ -334,7 +340,7 @@ export class DataTokens {
     address: string
   ): Promise<TransactionReceipt> {
     const weiAmount = this.web3.utils.toWei(amount)
-    return this.transferWei(this.dt20Address, toAddress, weiAmount, address)
+    return this.transferWei(toAddress, weiAmount, address)
   }
 
   /**
@@ -413,7 +419,7 @@ export class DataTokens {
    * @param {String} address
    * @return {Promise<String>} balance  Number of datatokens. Will be converted from wei
    */
-  public async balance(dataTokenAddress: string, address: string): Promise<string> {
+  public async balance(address: string): Promise<string> {
     // const datatoken = new this.web3.eth.Contract(this.datatokensABI, dataTokenAddress, {
     //   from: address
     // })
@@ -456,6 +462,16 @@ export class DataTokens {
   public async getSymbol(): Promise<string> {
    
     const trxReceipt = await this.datatoken.methods.symbol().call()
+    return trxReceipt
+  }
+
+  /** Get Permissions
+   * @param {String} address
+   * @return {Promise<Roles>} string
+   */
+   public async getPermissions(address:string): Promise<Roles> {
+   
+    const trxReceipt = await this.datatoken.methods.permissions(address).call()
     return trxReceipt
   }
 
