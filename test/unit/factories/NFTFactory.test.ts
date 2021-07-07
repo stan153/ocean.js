@@ -88,7 +88,6 @@ describe('NFT Factory test', () => {
     //console.log(newNFTAddress)
 
     nftDatatoken = new NFTDataToken(
-      nftAddress,
       web3,
       LoggerInstance
       // ERC721Template.abi as AbiItem[],
@@ -98,15 +97,10 @@ describe('NFT Factory test', () => {
   it('#createNFT - should create a second NFT Contract without specificifing name, symbol and templateIndex', async () => {
     newNFTAddress = await nftFactory.createNFT(nftOwner, data, flags)
 
-    newNFTDatatoken = new NFTDataToken(
-      newNFTAddress,
-      web3,
-      LoggerInstance
-      // ERC721Template.abi as AbiItem[],
-    )
+    
 
-    assert((await newNFTDatatoken.getName()) != null)
-    assert((await newNFTDatatoken.getSymbol()) != null)
+    assert((await nftDatatoken.getName(newNFTAddress)) != null)
+    assert((await nftDatatoken.getSymbol(newNFTAddress)) != null)
   })
 
   it('#getCurrentNFTCount - should succeed to use view function', async () => {

@@ -29,11 +29,11 @@ export class NFTDataToken {
   public factory721Address: string
   public factory721ABI: AbiItem | AbiItem[]
   public nftDatatokenABI: AbiItem | AbiItem[]
-  public nftAddress: string
+  //public nftAddress: string
   public web3: Web3
   private logger: Logger
   public startBlock: number
-  public contract721: Contract
+  //public contract721: Contract
   /**
    * Instantiate DataTokens (independently of Ocean).
    * @param {String} factory721Address
@@ -42,7 +42,7 @@ export class NFTDataToken {
    * @param {Web3} web3
    */
   constructor(
-    nftAddress: string,
+   // nftAddress: string,
    // factory721Address: string,
   //  factory721ABI: AbiItem | AbiItem[],
     web3: Web3,
@@ -57,7 +57,7 @@ export class NFTDataToken {
     this.web3 = web3
     this.logger = logger
     this.startBlock = startBlock || 0
-    this.contract721 = new this.web3.eth.Contract(this.nftDatatokenABI,nftAddress)
+    
   }
 
   /**
@@ -102,8 +102,9 @@ export class NFTDataToken {
    * @return {Promise<string>} ERC20 datatoken address
    */
   public async createERC20(
+    nftAddress: string,
     address: string,
-    //nftAddress: string,
+    
     minter: string,
     cap: string,
     name?: string,
@@ -119,13 +120,11 @@ export class NFTDataToken {
     }
 
     // Create 721contract object
-    // const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress, {
-    //   from: address
-    // })
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .createERC20(name, symbol, this.toWei(cap), templateIndex, minter)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -133,7 +132,7 @@ export class NFTDataToken {
     }
 
     // Invoke createToken function of the contract
-    const trxReceipt = await this.contract721.methods
+    const trxReceipt = await contract721.methods
       .createERC20(name, symbol, this.toWei(cap), templateIndex, minter)
       .send({
         from: address,
@@ -158,15 +157,16 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async addManager(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
+   
     manager: string
   ): Promise<TransactionReceipt> {
-   
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .addManager(manager)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -175,7 +175,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods.addManager(manager).send({
+    const trxReceipt = await contract721.methods.addManager(manager).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -192,16 +192,16 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async removeManager(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     manager: string
   ): Promise<TransactionReceipt> {
     
-   
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .removeManager(manager)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -210,7 +210,7 @@ export class NFTDataToken {
 
     // Invoke removeManager function of the contract
 
-    const trxReceipt = await this.contract721.methods.removeManager(manager).send({
+    const trxReceipt = await contract721.methods.removeManager(manager).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -228,18 +228,18 @@ export class NFTDataToken {
    */
 
   public async executeCall(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     operation: number,
     to: string,
     value: string,
     data: string
   ): Promise<TransactionReceipt> {
-  
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .executeCall(operation, to, this.web3.utils.toWei(value), data)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -248,7 +248,7 @@ export class NFTDataToken {
 
     // Invoke function of the contract
 
-    const trxReceipt = await this.contract721.methods
+    const trxReceipt = await contract721.methods
       .executeCall(operation, to, this.web3.utils.toWei(value), data)
       .send({
         from: address,
@@ -269,16 +269,16 @@ export class NFTDataToken {
    */
 
   public async setNewData(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     key: string,
     value: string
   ): Promise<TransactionReceipt> {
-    
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .setNewData(key, value)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -287,7 +287,7 @@ export class NFTDataToken {
 
     // Invoke function of the contract
 
-    const trxReceipt = await this.contract721.methods.setNewData(key, value).send({
+    const trxReceipt = await contract721.methods.setNewData(key, value).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -307,18 +307,18 @@ export class NFTDataToken {
    */
 
   public async setDataV3(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     erc20Address: string,
     value: string,
     flags: string,
     data: string
   ): Promise<TransactionReceipt> {
-    
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .setDataV3(erc20Address, value, flags, data)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -327,7 +327,7 @@ export class NFTDataToken {
 
     // Invoke function of the contract
 
-    const trxReceipt = await this.contract721.methods
+    const trxReceipt = await contract721.methods
       .setDataV3(erc20Address, value, flags, data)
       .send({
         from: address,
@@ -344,14 +344,14 @@ export class NFTDataToken {
    */
 
   public async cleanPermissions(
-    address: string,
-   // nftAddress: string
+    nftAddress:string,
+    address: string
   ): Promise<TransactionReceipt> {
-    
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .cleanPermissions()
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -360,7 +360,7 @@ export class NFTDataToken {
 
     // Invoke function of the contract
 
-    const trxReceipt = await this.contract721.methods.cleanPermissions().send({
+    const trxReceipt = await contract721.methods.cleanPermissions().send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -382,16 +382,16 @@ export class NFTDataToken {
    */
 
   public async wrapV3DT(
+    nftAddress: string,
     address: string,
-  //  nftAddress: string,
     erc20Address: string,
     minter: string
   ): Promise<TransactionReceipt> {
-   
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .wrapV3DT(erc20Address, minter)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -400,7 +400,7 @@ export class NFTDataToken {
 
     // Invoke function of the contract
 
-    const trxReceipt = await this.contract721.methods.wrapV3DT(erc20Address, minter).send({
+    const trxReceipt = await contract721.methods.wrapV3DT(erc20Address, minter).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -420,17 +420,17 @@ export class NFTDataToken {
    */
 
   public async mintV3DT(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     erc20Address: string,
     to: string,
     value: string
   ): Promise<TransactionReceipt> {
-  
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .mintV3DT(erc20Address, to, this.web3.utils.toWei(value))
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -439,7 +439,7 @@ export class NFTDataToken {
 
     // Invoke function of the contract
 
-    const trxReceipt = await this.contract721.methods
+    const trxReceipt = await contract721.methods
       .mintV3DT(erc20Address, to, this.web3.utils.toWei(value))
       .send({
         from: address,
@@ -458,15 +458,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async addV3Minter(
+    nftAddress: string,
     address: string,
-    //nftAddress: string,
     v3minter: string
   ): Promise<TransactionReceipt> {
-   
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .addV3Minter(v3minter)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -475,7 +475,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods.addV3Minter(v3minter).send({
+    const trxReceipt = await contract721.methods.addV3Minter(v3minter).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -492,15 +492,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async removeV3Minter(
+    nftAddress:string,
     address: string,
-    //nftAddress: string,
     v3minter: string
   ): Promise<TransactionReceipt> {
-   
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .removeV3Minter(v3minter)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -509,7 +509,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods.removeV3Minter(v3minter).send({
+    const trxReceipt = await contract721.methods.removeV3Minter(v3minter).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -526,15 +526,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async transferNFT(
+    nftAddress: string,
     address: string,
-    //nftAddress: string,
     to: string
   ): Promise<TransactionReceipt> {
-    
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .transferFrom(address, to, 1) // tokenId = 1
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -543,7 +543,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods.transferFrom(address, to, 1).send({
+    const trxReceipt = await contract721.methods.transferFrom(address, to, 1).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -560,15 +560,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async addStoreUpdater(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     storeUpdater: string
   ): Promise<TransactionReceipt> {
-    
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .addTo725StoreList(storeUpdater)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -577,7 +577,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods.addTo725StoreList(storeUpdater).send({
+    const trxReceipt = await contract721.methods.addTo725StoreList(storeUpdater).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -594,15 +594,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async removeStoreUpdater(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     storeUpdater: string
   ): Promise<TransactionReceipt> {
-    
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .removeFrom725StoreList(storeUpdater)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -611,7 +611,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods
+    const trxReceipt = await contract721.methods
       .removeFrom725StoreList(storeUpdater)
       .send({
         from: address,
@@ -632,18 +632,16 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
    public async addERC20Deployer(
+    nftAddress: string,
     address: string,
-   // nftAddress: string,
     erc20Deployer: string
   ): Promise<TransactionReceipt> {
     // Create 721contract object
-    // const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress, {
-    //   from: address
-    // })
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .addToCreateERC20List(erc20Deployer)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -652,7 +650,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods.addToCreateERC20List(erc20Deployer).send({
+    const trxReceipt = await contract721.methods.addToCreateERC20List(erc20Deployer).send({
       from: address,
       gas: estGas + 1,
       gasPrice: await getFairGasPrice(this.web3)
@@ -670,15 +668,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
    public async removeERC20Deployer(
+    nftAddress:string,
     address: string,
-   // nftAddress: string,
     erc20Deployer: string
   ): Promise<TransactionReceipt> {
-   
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .removeFromCreateERC20List(erc20Deployer)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -687,7 +685,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods
+    const trxReceipt = await contract721.methods
       .removeFromCreateERC20List(erc20Deployer)
       .send({
         from: address,
@@ -707,15 +705,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
     public async addMetadataUpdater(
+      nftAddress:string,
       address: string,
-    //  nftAddress: string,
       metadataUpdater: string
     ): Promise<TransactionReceipt> {
-     
+      const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
       const gasLimitDefault = this.GASLIMIT_DEFAULT
       let estGas
       try {
-        estGas = await this.contract721.methods
+        estGas = await contract721.methods
           .addToMetadataList(metadataUpdater)
           .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
       } catch (e) {
@@ -724,7 +722,7 @@ export class NFTDataToken {
   
       // Invoke addManager function of the contract
   
-      const trxReceipt = await this.contract721.methods.addToMetadataList(metadataUpdater).send({
+      const trxReceipt = await contract721.methods.addToMetadataList(metadataUpdater).send({
         from: address,
         gas: estGas + 1,
         gasPrice: await getFairGasPrice(this.web3)
@@ -742,15 +740,15 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
    public async removeMetadataUpdater(
+    nftAddress:string,
     address: string,
-   // nftAddress: string,
     metadataUpdater: string
   ): Promise<TransactionReceipt> {
-   
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
-      estGas = await this.contract721.methods
+      estGas = await contract721.methods
         .removeFromMetadataList(metadataUpdater)
         .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
@@ -759,7 +757,7 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await this.contract721.methods
+    const trxReceipt = await contract721.methods
       .removeFromMetadataList(metadataUpdater)
       .send({
         from: address,
@@ -776,10 +774,10 @@ export class NFTDataToken {
    * @return {Promise<string>} The data stored at the key
    */
     public async getData(
-      //nftAddress: string, 
+      nftAddress: string, 
       key: string): Promise<string> {
-     // const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
-      const trxReceipt = await this.contract721.methods.getData(key).call()
+      const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+      const trxReceipt = await contract721.methods.getData(key).call()
       return trxReceipt
     }
 
@@ -788,9 +786,9 @@ export class NFTDataToken {
    * @param {String} nftAddress
    * @return {Promise<string>} string
    */
-  public async getName(): Promise<string> {
-    //const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
-    const trxReceipt = await this.contract721.methods.name().call()
+  public async getName(nftAddress:string): Promise<string> {
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+    const trxReceipt = await contract721.methods.name().call()
     return trxReceipt
   }
 
@@ -798,9 +796,9 @@ export class NFTDataToken {
    * @param {String} address
    * @return {Promise<Roles>} string
    */
-     public async getPermissions(address:string): Promise<Roles> {
-      //const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
-      const trxReceipt = await this.contract721.methods._getPermissions(address).call()
+     public async getPermissions(nftAddress:string, address:string): Promise<Roles> {
+      const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+      const trxReceipt = await contract721.methods._getPermissions(address).call()
       return trxReceipt
     }
 
@@ -808,9 +806,9 @@ export class NFTDataToken {
    * @param {String} nftAddress
    * @return {Promise<string>} string
    */
-  public async getSymbol(): Promise<string> {
-   
-    const trxReceipt = await this.contract721.methods.symbol().call()
+  public async getSymbol(nftAddress:string): Promise<string> {
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+    const trxReceipt = await contract721.methods.symbol().call()
     return trxReceipt
   }
 
@@ -818,9 +816,9 @@ export class NFTDataToken {
    * @param {String} nftAddress
    * @return {Promise<string>} string
    */
-  public async getOwner(): Promise<string> {
-   // const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
-    const trxReceipt = await this.contract721.methods.ownerOf(1).call()
+  public async getOwner(nftAddress:string): Promise<string> {
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+    const trxReceipt = await contract721.methods.ownerOf(1).call()
     return trxReceipt
   }
 
