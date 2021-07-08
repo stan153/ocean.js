@@ -148,6 +148,28 @@ describe('DT20 Test', () => {
   
   })
 
+  it('#addFeeManager - should add user1 as feeManager, if ERC20Deployer permission (at 721 level)', async () => {
+    assert(((await nftDatatoken.getPermissions(nftAddress,nftOwner)).deployERC20) == true)
+    assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == false)
+    
+    await erc20DT.addFeeManager(erc20Address,nftOwner,user1)
+
+    assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == true)
+
+   
+  })
+
+  it('#addFeeManager - should remove user1 as feeManager, if ERC20Deployer permission (at 721 level)', async () => {
+    assert(((await nftDatatoken.getPermissions(nftAddress,nftOwner)).deployERC20) == true)
+    assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == true)
+    
+    await erc20DT.removeFeeManager(erc20Address,nftOwner,user1)
+
+    assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == false)
+
+  
+  })
+
   it('#setData - should set a value into 725Y standard, if ERC20Deployer permission (at 721 level)', async () => {
     assert(((await nftDatatoken.getPermissions(nftAddress,nftOwner)).deployERC20) == true)
     
@@ -159,11 +181,19 @@ describe('DT20 Test', () => {
   
   })
 
-  it('#setFeeCollector - should set a new feeCollector, if NFT Owner', async () => {
+  it('#setFeeCollector - should set a new feeCollector, if FEE MANAGER', async () => {
    // IF NOT SET, feeCollector is NFT OWNER
     assert(await erc20DT.getFeeCollector(erc20Address) == nftOwner)
-    await erc20DT.setFeeCollector(erc20Address,nftOwner,user1)
-    assert(await erc20DT.getFeeCollector(erc20Address) == user1)
+
+    assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == false)
+    
+    // NFT Owner has also ERC721 deployERC20 permission so he can add fee manager
+    await erc20DT.addFeeManager(erc20Address,nftOwner,user1)
+
+    assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == true)
+
+    await erc20DT.setFeeCollector(erc20Address,user1,user2)
+    assert(await erc20DT.getFeeCollector(erc20Address) == user2)
     
   
   })
@@ -172,13 +202,17 @@ describe('DT20 Test', () => {
      
      assert(((await erc20DT.getPermissions(erc20Address,nftOwner)).minter) == true)
 
-     assert(await erc20DT.getFeeCollector(erc20Address) == user1)
+     assert(await erc20DT.getFeeCollector(erc20Address) == user2)
+
+     assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == true)
 
      await erc20DT.cleanPermissions(erc20Address,nftOwner)
 
      assert(await erc20DT.getFeeCollector(erc20Address) == nftOwner)
 
      assert(((await erc20DT.getPermissions(erc20Address,nftOwner)).minter) == false)
+     console.log(((await erc20DT.getPermissions(erc20Address,user1)).feeManager))
+     assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == false)
      
    
    })
