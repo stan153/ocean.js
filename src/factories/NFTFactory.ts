@@ -136,15 +136,13 @@ export class NFTFactory {
     return trxReceipt
   }
 
-    /** Get Current NFT Count (NFT created)
-   * @return {Promise<string>} Number of NFT created from this factory
+  /** Get Factory Owner
+   * @return {Promise<string>} Factory Owner address
    */
-     public async getOwner(): Promise<string> {
-      const trxReceipt = await this.factory721.methods.owner().call()
-      return trxReceipt
-    }
-
-  
+  public async getOwner(): Promise<string> {
+    const trxReceipt = await this.factory721.methods.owner().call()
+    return trxReceipt
+  }
 
   /** Get Current Template Count
    * @return {Promise<number>} Number of Template added to this factory
@@ -173,10 +171,8 @@ export class NFTFactory {
     address: string,
     templateAddress: string
   ): Promise<TransactionReceipt> {
-    if (await this.getOwner() != address) {
-      this.logger.error(
-        `Caller is not Factory Owner`
-      )
+    if ((await this.getOwner()) != address) {
+      this.logger.error(`Caller is not Factory Owner`)
       return null
     }
 
@@ -212,11 +208,8 @@ export class NFTFactory {
     address: string,
     templateIndex: number
   ): Promise<TransactionReceipt> {
-    
-    if (await this.getOwner() != address) {
-      this.logger.error(
-        `Caller is not Factory Owner`
-      )
+    if ((await this.getOwner()) != address) {
+      this.logger.error(`Caller is not Factory Owner`)
       return null
     }
 
@@ -252,13 +245,11 @@ export class NFTFactory {
     address: string,
     templateIndex: number
   ): Promise<TransactionReceipt> {
-    if (await this.getOwner() != address) {
-      this.logger.error(
-        `Caller is not Factory Owner`
-      )
+    if ((await this.getOwner()) != address) {
+      this.logger.error(`Caller is not Factory Owner`)
       return null
     }
-    
+
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {

@@ -18,7 +18,6 @@ describe('DT20 Factory test', () => {
   let user2: string
   let contracts: TestContractHandler
   let erc20Factory: DT20Factory
-  
 
   it('should deploy contracts', async () => {
     contracts = new TestContractHandler(
@@ -42,19 +41,22 @@ describe('DT20 Factory test', () => {
   })
 
   it('should initialize a new DT20Factory', async () => {
-    
-    erc20Factory = new DT20Factory(
-      contracts.factory20Address,
-      web3,
-      LoggerInstance
+    erc20Factory = new DT20Factory(contracts.factory20Address, web3, LoggerInstance)
+  })
+
+  it('#setERC721Factory - should fail to set the ERC721 Factory address if factoryOwner', async () => {
+    assert(
+      (await erc20Factory.setERC721Factory(user1, contracts.factory721Address)) == null
     )
   })
 
-  it('should set the ERC721 Factory address if factoryOwner', async () => {
-    assert(await erc20Factory.getNFTFactory() == '0x0000000000000000000000000000000000000000')
+  it('#setERC721Factory - should set the ERC721 Factory address if factoryOwner', async () => {
+    assert(
+      (await erc20Factory.getNFTFactory()) == '0x0000000000000000000000000000000000000000'
+    )
 
     await erc20Factory.setERC721Factory(factoryOwner, contracts.factory721Address)
-    assert(await erc20Factory.getNFTFactory() == contracts.factory721Address)
+    assert((await erc20Factory.getNFTFactory()) == contracts.factory721Address)
   })
 
   it('#getCurrentTokenCount - should succeed to use view function', async () => {
@@ -73,33 +75,42 @@ describe('DT20 Factory test', () => {
     assert((await erc20Factory.getTokenTemplate(1)).isActive == true)
   })
 
+  it('#addTokenTemplate - should fail to add a new ERC20 Template, if NOT factory Owner', async () => {
+    assert(
+      (await erc20Factory.addTokenTemplate(user1, contracts.template20Address)) == null
+    )
+  })
+
   it('#addTokenTemplate - should succeed to add a new ERC20 Template, if factory Owner', async () => {
     assert((await erc20Factory.getCurrentTemplateCount()) == 1)
-    
-    await erc20Factory.addTokenTemplate(factoryOwner,contracts.template20Address)
+
+    await erc20Factory.addTokenTemplate(factoryOwner, contracts.template20Address)
     assert((await erc20Factory.getCurrentTemplateCount()) == 2)
-    
+
     assert(
       (await erc20Factory.getTokenTemplate(2)).templateAddress ==
         contracts.template20Address
     )
     assert((await erc20Factory.getTokenTemplate(2)).isActive == true)
+  })
 
+  it('#disableTokenTemplate - should fail to disable a new ERC20 Template, if factory Owner', async () => {
+    assert((await erc20Factory.disableTokenTemplate(user1, 2)) == null)
   })
 
   it('#disableTokenTemplate - should succeed to disable a ERC20 Template, if factory Owner', async () => {
     assert((await erc20Factory.getTokenTemplate(2)).isActive == true)
-    await erc20Factory.disableTokenTemplate(factoryOwner,2)
+    await erc20Factory.disableTokenTemplate(factoryOwner, 2)
     assert((await erc20Factory.getTokenTemplate(2)).isActive == false)
-   
+  })
+
+  it('#reactivateTokenTemplate - should fail to reactivate a new ERC20 Template, if NOT factory Owner', async () => {
+    assert((await erc20Factory.reactivateTokenTemplate(user1, 2)) == null)
   })
 
   it('#reactivateTokenTemplate - should succeed to reactivate a previously disabled ERC20 Template, if factory Owner', async () => {
     assert((await erc20Factory.getTokenTemplate(2)).isActive == false)
-    await erc20Factory.reactivateTokenTemplate(factoryOwner,2)
+    await erc20Factory.reactivateTokenTemplate(factoryOwner, 2)
     assert((await erc20Factory.getTokenTemplate(2)).isActive == true)
-   
   })
-
-
 })

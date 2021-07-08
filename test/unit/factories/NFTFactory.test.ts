@@ -145,7 +145,7 @@ describe('NFT Factory test', () => {
     assert((await nftFactory.getTokenTemplate(2)).isActive == false)
   })
 
-  it('#disableTokenTemplate - should fail to reactivate a ERC721 Template, if not Factory Owner', async () => {
+  it('#reactivateTokenTemplate - should fail to reactivate a ERC721 Template, if not Factory Owner', async () => {
     assert((await nftFactory.reactivateTokenTemplate(user1, 2)) == null)
   })
 

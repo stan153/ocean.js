@@ -1,7 +1,7 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/contracts/ERC20Factory.sol/ERC20Factory.json' 
+import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/contracts/ERC20Factory.sol/ERC20Factory.json'
 import { Logger, getFairGasPrice } from '../utils'
 
 import { TransactionReceipt } from 'web3-core'
@@ -32,7 +32,7 @@ export class DT20Factory {
    */
   constructor(
     factoryAddress: string,
-    
+
     web3: Web3,
     logger: Logger,
     factoryABI?: AbiItem | AbiItem[],
@@ -71,13 +71,21 @@ export class DT20Factory {
     return template
   }
 
-   /** Get ERC721Factory Address
+  /** Get ERC721Factory Address
    * @return {Promise<string>} NFT Factory Address
    */
-    public async getNFTFactory(): Promise<string> {
-      const trxReceipt = await this.factory.methods.erc721Factory().call()
-      return trxReceipt
-    }
+  public async getNFTFactory(): Promise<string> {
+    const trxReceipt = await this.factory.methods.erc721Factory().call()
+    return trxReceipt
+  }
+
+  /** Get Factory Owner
+   * @return {Promise<string>} Factory Owner address
+   */
+  public async getOwner(): Promise<string> {
+    const trxReceipt = await this.factory.methods.owner().call()
+    return trxReceipt
+  }
   /**
    * Add a new erc20 token template - only factory Owner
    * @param {String} address
@@ -88,6 +96,11 @@ export class DT20Factory {
     address: string,
     templateAddress: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner()) != address) {
+      this.logger.error(`Caller is not Factory Owner`)
+      return null
+    }
+
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -118,6 +131,11 @@ export class DT20Factory {
     address: string,
     templateIndex: number
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner()) != address) {
+      this.logger.error(`Caller is not Factory Owner`)
+      return null
+    }
+
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -150,6 +168,10 @@ export class DT20Factory {
     address: string,
     templateIndex: number
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner()) != address) {
+      this.logger.error(`Caller is not Factory Owner`)
+      return null
+    }
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -172,17 +194,20 @@ export class DT20Factory {
     return trxReceipt
   }
 
-
   /**
    * Set the erc721 factory address - only ERC20 Factory OWNER
    * @param {String} address
    * @param {String} NFTFactoryAddress NFT factory address
    * @return {Promise<TransactionReceipt>}
    */
-   public async setERC721Factory(
+  public async setERC721Factory(
     address: string,
     NFTFactoryAddress: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner()) != address) {
+      this.logger.error(`Caller is not Factory Owner`)
+      return null
+    }
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -194,11 +219,13 @@ export class DT20Factory {
     }
 
     // Invoke function of the contract
-    const trxReceipt = await this.factory.methods.setERC721Factory(NFTFactoryAddress).send({
-      from: address,
-      gas: estGas + 1,
-      gasPrice: await getFairGasPrice(this.web3)
-    })
+    const trxReceipt = await this.factory.methods
+      .setERC721Factory(NFTFactoryAddress)
+      .send({
+        from: address,
+        gas: estGas + 1,
+        gasPrice: await getFairGasPrice(this.web3)
+      })
 
     return trxReceipt
   }
