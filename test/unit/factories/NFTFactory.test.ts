@@ -117,9 +117,11 @@ describe('NFT Factory test', () => {
   })
 
   it('#addTokenTemplate - should fail to add a ERC721 Template, if not Factory Owner', async () => {
-    assert(
-      (await nftFactory.addTokenTemplate(user1, contracts.template721Address)) == null
-    )
+    try {
+      await nftFactory.addTokenTemplate(user1, contracts.template721Address)
+    } catch (e) {
+      assert(e.message == 'Caller is not Factory Owner')
+    }
   })
 
   it('#addTokenTemplate - should succeed to add a new ERC721 Template, if factory Owner', async () => {
@@ -136,7 +138,11 @@ describe('NFT Factory test', () => {
   })
 
   it('#disableTokenTemplate - should fail to disable a ERC721 Template, if not Factory Owner', async () => {
-    assert((await nftFactory.disableTokenTemplate(user1, 2)) == null)
+    try {
+      await nftFactory.disableTokenTemplate(user1, 2)
+    } catch (e) {
+      assert(e.message == 'Caller is not Factory Owner')
+    }
   })
 
   it('#disableTokenTemplate - should succeed to disable a ERC721 Template, if factory Owner', async () => {
@@ -146,7 +152,11 @@ describe('NFT Factory test', () => {
   })
 
   it('#reactivateTokenTemplate - should fail to reactivate a ERC721 Template, if not Factory Owner', async () => {
-    assert((await nftFactory.reactivateTokenTemplate(user1, 2)) == null)
+    try {
+      await nftFactory.reactivateTokenTemplate(user1, 2)
+    } catch (e) {
+      assert(e.message == 'Caller is not Factory Owner')
+    }
   })
 
   it('#reactivateTokenTemplate - should succeed to reactivate a previously disabled ERC721 Template, if factory Owner', async () => {

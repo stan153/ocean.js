@@ -45,9 +45,11 @@ describe('DT20 Factory test', () => {
   })
 
   it('#setERC721Factory - should fail to set the ERC721 Factory address if factoryOwner', async () => {
-    assert(
-      (await erc20Factory.setERC721Factory(user1, contracts.factory721Address)) == null
-    )
+    try {
+      await erc20Factory.setERC721Factory(user1, contracts.factory721Address)
+    } catch (e) {
+      assert(e.message == 'Caller is not Factory Owner')
+    }
   })
 
   it('#setERC721Factory - should set the ERC721 Factory address if factoryOwner', async () => {
@@ -76,9 +78,11 @@ describe('DT20 Factory test', () => {
   })
 
   it('#addTokenTemplate - should fail to add a new ERC20 Template, if NOT factory Owner', async () => {
-    assert(
-      (await erc20Factory.addTokenTemplate(user1, contracts.template20Address)) == null
-    )
+    try {
+      await erc20Factory.addTokenTemplate(user1, contracts.template20Address)
+    } catch (e) {
+      assert(e.message == 'Caller is not Factory Owner')
+    }
   })
 
   it('#addTokenTemplate - should succeed to add a new ERC20 Template, if factory Owner', async () => {
@@ -95,7 +99,11 @@ describe('DT20 Factory test', () => {
   })
 
   it('#disableTokenTemplate - should fail to disable a new ERC20 Template, if factory Owner', async () => {
-    assert((await erc20Factory.disableTokenTemplate(user1, 2)) == null)
+    try {
+      await erc20Factory.disableTokenTemplate(user1, 2)
+    } catch (e) {
+      assert(e.message == 'Caller is not Factory Owner')
+    }
   })
 
   it('#disableTokenTemplate - should succeed to disable a ERC20 Template, if factory Owner', async () => {
@@ -105,7 +113,11 @@ describe('DT20 Factory test', () => {
   })
 
   it('#reactivateTokenTemplate - should fail to reactivate a new ERC20 Template, if NOT factory Owner', async () => {
-    assert((await erc20Factory.reactivateTokenTemplate(user1, 2)) == null)
+    try {
+      await erc20Factory.reactivateTokenTemplate(user1, 2)
+    } catch (e) {
+      assert(e.message == 'Caller is not Factory Owner')
+    }
   })
 
   it('#reactivateTokenTemplate - should succeed to reactivate a previously disabled ERC20 Template, if factory Owner', async () => {

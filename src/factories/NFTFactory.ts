@@ -172,8 +172,7 @@ export class NFTFactory {
     templateAddress: string
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner()) != address) {
-      this.logger.error(`Caller is not Factory Owner`)
-      return null
+      throw new Error(`Caller is not Factory Owner`)
     }
 
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -209,8 +208,7 @@ export class NFTFactory {
     templateIndex: number
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner()) != address) {
-      this.logger.error(`Caller is not Factory Owner`)
-      return null
+      throw new Error(`Caller is not Factory Owner`)
     }
 
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -246,8 +244,7 @@ export class NFTFactory {
     templateIndex: number
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner()) != address) {
-      this.logger.error(`Caller is not Factory Owner`)
-      return null
+      throw new Error(`Caller is not Factory Owner`)
     }
 
     const gasLimitDefault = this.GASLIMIT_DEFAULT

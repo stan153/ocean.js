@@ -97,8 +97,7 @@ export class DT20Factory {
     templateAddress: string
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner()) != address) {
-      this.logger.error(`Caller is not Factory Owner`)
-      return null
+      throw new Error(`Caller is not Factory Owner`)
     }
 
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -132,8 +131,7 @@ export class DT20Factory {
     templateIndex: number
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner()) != address) {
-      this.logger.error(`Caller is not Factory Owner`)
-      return null
+      throw new Error(`Caller is not Factory Owner`)
     }
 
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -169,8 +167,7 @@ export class DT20Factory {
     templateIndex: number
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner()) != address) {
-      this.logger.error(`Caller is not Factory Owner`)
-      return null
+      throw new Error(`Caller is not Factory Owner`)
     }
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -205,8 +202,7 @@ export class DT20Factory {
     NFTFactoryAddress: string
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner()) != address) {
-      this.logger.error(`Caller is not Factory Owner`)
-      return null
+      throw new Error(`Caller is not Factory Owner`)
     }
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas

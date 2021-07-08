@@ -162,6 +162,10 @@ export class NFTDataToken {
    
     manager: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner(nftAddress)) != address) {
+      this.logger.error(`Caller is not NFT Owner`)
+      return null
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -196,7 +200,10 @@ export class NFTDataToken {
     address: string,
     manager: string
   ): Promise<TransactionReceipt> {
-    
+    if ((await this.getOwner(nftAddress)) != address) {
+      this.logger.error(`Caller is not NFT Owner`)
+      return null
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -496,6 +503,10 @@ export class NFTDataToken {
     address: string,
     v3minter: string
   ): Promise<TransactionReceipt> {
+    // if ((await this.getPermissions(nftAddress,address)).manager == true) {
+    //   this.logger.error(`Caller is not NFT Owner`)
+    //   return null
+    // }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -530,6 +541,10 @@ export class NFTDataToken {
     address: string,
     to: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner(nftAddress)) != address) {
+      this.logger.error(`Caller is not NFT Owner`)
+      return null
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
