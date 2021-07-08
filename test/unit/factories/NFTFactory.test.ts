@@ -35,7 +35,6 @@ describe('NFT Factory test', () => {
     'f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160'
   )
 
-
   // TODO: complete unit test
   it('should deploy contracts', async () => {
     contracts = new TestContractHandler(
@@ -97,8 +96,6 @@ describe('NFT Factory test', () => {
   it('#createNFT - should create a second NFT Contract without specificifing name, symbol and templateIndex', async () => {
     newNFTAddress = await nftFactory.createNFT(nftOwner, data, flags)
 
-    
-
     assert((await nftDatatoken.getName(newNFTAddress)) != null)
     assert((await nftDatatoken.getSymbol(newNFTAddress)) != null)
   })
@@ -119,33 +116,42 @@ describe('NFT Factory test', () => {
     assert((await nftFactory.getTokenTemplate(1)).isActive == true)
   })
 
+  it('#addTokenTemplate - should fail to add a ERC721 Template, if not Factory Owner', async () => {
+    assert(
+      (await nftFactory.addTokenTemplate(user1, contracts.template721Address)) == null
+    )
+  })
+
   it('#addTokenTemplate - should succeed to add a new ERC721 Template, if factory Owner', async () => {
     assert((await nftFactory.getCurrentTemplateCount()) == 1)
-    
-    await nftFactory.addTokenTemplate(factoryOwner,contracts.template721Address)
+
+    await nftFactory.addTokenTemplate(factoryOwner, contracts.template721Address)
     assert((await nftFactory.getCurrentTemplateCount()) == 2)
-    
+
     assert(
       (await nftFactory.getTokenTemplate(2)).templateAddress ==
         contracts.template721Address
     )
     assert((await nftFactory.getTokenTemplate(2)).isActive == true)
+  })
 
+  it('#disableTokenTemplate - should fail to disable a ERC721 Template, if not Factory Owner', async () => {
+    assert((await nftFactory.disableTokenTemplate(user1, 2)) == null)
   })
 
   it('#disableTokenTemplate - should succeed to disable a ERC721 Template, if factory Owner', async () => {
     assert((await nftFactory.getTokenTemplate(2)).isActive == true)
-    await nftFactory.disableTokenTemplate(factoryOwner,2)
+    await nftFactory.disableTokenTemplate(factoryOwner, 2)
     assert((await nftFactory.getTokenTemplate(2)).isActive == false)
-   
+  })
+
+  it('#disableTokenTemplate - should fail to reactivate a ERC721 Template, if not Factory Owner', async () => {
+    assert((await nftFactory.reactivateTokenTemplate(user1, 2)) == null)
   })
 
   it('#reactivateTokenTemplate - should succeed to reactivate a previously disabled ERC721 Template, if factory Owner', async () => {
     assert((await nftFactory.getTokenTemplate(2)).isActive == false)
-    await nftFactory.reactivateTokenTemplate(factoryOwner,2)
+    await nftFactory.reactivateTokenTemplate(factoryOwner, 2)
     assert((await nftFactory.getTokenTemplate(2)).isActive == true)
-   
   })
-
-
 })

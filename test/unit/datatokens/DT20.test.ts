@@ -211,7 +211,7 @@ describe('DT20 Test', () => {
      assert(await erc20DT.getFeeCollector(erc20Address) == nftOwner)
 
      assert(((await erc20DT.getPermissions(erc20Address,nftOwner)).minter) == false)
-     console.log(((await erc20DT.getPermissions(erc20Address,user1)).feeManager))
+    
      assert(((await erc20DT.getPermissions(erc20Address,user1)).feeManager) == false)
      
    
