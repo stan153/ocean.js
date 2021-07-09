@@ -148,9 +148,10 @@ export class WebServiceConnector {
   private async fetch(url: string, opts: RequestInit): Promise<Response> {
     const result = await fetch(url, opts)
     if (!result.ok) {
+      const error = await result.text()
       this.logger.error(`Error requesting [${opts.method}] ${url}`)
-      this.logger.error(`Response message: \n${await result.text()}`)
-      throw result
+      this.logger.error(`Response message: \n${error}`)
+      throw new Error(error)
     }
     return result
   }
