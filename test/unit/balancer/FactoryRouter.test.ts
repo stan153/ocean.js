@@ -73,7 +73,19 @@ describe('Factory Router', () => {
   })
 
   it('#oceanTokens - ocean Token is set on the list', async () => {
-    
-    assert(await router.getOceanTokens(contracts.mockOceanAddress) == true)
+    assert((await router.getOceanTokens(contracts.mockOceanAddress)) == true)
+  })
+
+  it('#addOceanToken - should fail a new token to ocean list, if Router Owner', async () => {
+    try {
+      await router.addOceanToken(user2, contracts.mockERC20Address)
+    } catch (e) {
+      assert(e.message == 'Caller is not Router Owner')
+    }
+  })
+
+  it('#addOceanToken - should add a new token to ocean list, if Router Owner', async () => {
+    await router.addOceanToken(contractDeployer, contracts.mockERC20Address)
+    assert((await router.getOceanTokens(contracts.mockERC20Address)) == true)
   })
 })

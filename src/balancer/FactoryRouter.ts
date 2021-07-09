@@ -136,6 +136,9 @@ export class FactoryRouter {
     account: string,
     oceanToken: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner()) != account) {
+      throw new Error(`Caller is not Router Owner`)
+    }
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
       return null
@@ -164,11 +167,18 @@ export class FactoryRouter {
   }
 
   /** Get Token on ocean list
-   * @return {Promise<boolean>} string
+   * @return {Promise<boolean>} boolean
    */
   public async getOceanTokens(tokenAddress: string): Promise<boolean> {
-   
     const trxReceipt = await this.router.methods.oceanTokens(tokenAddress).call()
+    return trxReceipt
+  }
+
+  /** Get Router Owner
+   * @return {Promise<string>} string
+   */
+  public async getOwner(): Promise<string> {
+    const trxReceipt = await this.router.methods.routerOwner().call()
     return trxReceipt
   }
 }
