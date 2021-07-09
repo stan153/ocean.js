@@ -112,7 +112,11 @@ describe('NFTDatatoken', () => {
   })
 
   it('#addManager - should fail to add a new Manager, if NOT NFT Owner', async () => {
-    assert((await nftDatatoken.addManager(nftAddress, user1, user1)) == null)
+    try {
+      await nftDatatoken.addManager(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not NFT Owner')
+    }
   })
 
   it('#addManager - should add a new Manager', async () => {
@@ -124,7 +128,11 @@ describe('NFTDatatoken', () => {
   })
 
   it('#removeManager - should fail to remove a new Manager, if NOT NFT Owner', async () => {
-    assert((await nftDatatoken.removeManager(nftAddress, user1, nftOwner)) == null)
+    try {
+      await nftDatatoken.removeManager(nftAddress, user1, nftOwner)
+    } catch (e) {
+      assert(e.message == 'Caller is not NFT Owner')
+    }
   })
 
   it('#removeManager - should remove a Manager', async () => {
@@ -133,6 +141,18 @@ describe('NFTDatatoken', () => {
     await nftDatatoken.removeManager(nftAddress, nftOwner, user1)
 
     assert((await nftDatatoken.getPermissions(nftAddress, user1)).manager == false)
+  })
+  it('#executeCall - should fail to call executeCall if not Manager', async () => {
+    const operation = 0
+    const to = user2
+    const value = '10'
+    const data = web3.utils.asciiToHex('SomeData')
+
+    try {
+      await nftDatatoken.executeCall(nftAddress, nftOwner, operation, to, value, data)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
   })
 
   it('#executeCall - should call executeCall from Manager', async () => {
@@ -143,6 +163,15 @@ describe('NFTDatatoken', () => {
 
     await nftDatatoken.executeCall(nftAddress, nftOwner, operation, to, value, data)
   })
+  it('#setNewData - should fail to setNewData if NOT Store updater', async () => {
+    assert((await nftDatatoken.getPermissions(nftAddress, user1)).store == false)
+
+    try {
+      await nftDatatoken.setNewData(nftAddress, user1, key, value)
+    } catch (e) {
+      assert(e.message == 'Caller is not Store Updater')
+    }
+  })
 
   it('#setNewData - should setNewData if Store updater', async () => {
     await nftDatatoken.addStoreUpdater(nftAddress, nftOwner, user1)
@@ -150,6 +179,13 @@ describe('NFTDatatoken', () => {
     await nftDatatoken.setNewData(nftAddress, user1, key, value)
 
     assert((await nftDatatoken.getData(nftAddress, key)) == value)
+  })
+  it('#cleanPermissions - should fail to cleanPermissions if NOT NFTOwner', async () => {
+    try {
+      await nftDatatoken.cleanPermissions(nftAddress, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not NFT Owner')
+    }
   })
 
   it('#cleanPermissions - should cleanPermissions if NFTOwner', async () => {
@@ -166,7 +202,22 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(nftAddress, nftOwner)).manager == true)
   })
 
-  it('#addStoreUpdater #removeStoreUpdater - should add and remove from Store Updater if Manager', async () => {
+  it('#addStoreUpdater #removeStoreUpdater - should fail to add and remove Store Updater if NOT Manager', async () => {
+    assert((await nftDatatoken.getPermissions(nftAddress, user1)).manager == false)
+    try {
+      await nftDatatoken.addStoreUpdater(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
+
+    try {
+      await nftDatatoken.removeStoreUpdater(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
+  })
+
+  it('#addStoreUpdater #removeStoreUpdater - should add and remove Store Updater if Manager', async () => {
     assert((await nftDatatoken.getPermissions(nftAddress, user1)).store == false)
 
     await nftDatatoken.addStoreUpdater(nftAddress, nftOwner, user1)
@@ -178,7 +229,22 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(nftAddress, user1)).store == false)
   })
 
-  it('#addERC20Deployer #removeERC20Deployer - should add and remove from ERC20deployer if Manager', async () => {
+  it('#addERC20Deployer #removeERC20Deployer - should fail to add and remove ERC20deployer if NOT Manager', async () => {
+    assert((await nftDatatoken.getPermissions(nftAddress, user1)).manager == false)
+    try {
+      await nftDatatoken.addERC20Deployer(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
+
+    try {
+      await nftDatatoken.removeERC20Deployer(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
+  })
+
+  it('#addERC20Deployer #removeERC20Deployer - should add and remove ERC20deployer if Manager', async () => {
     assert((await nftDatatoken.getPermissions(nftAddress, user1)).deployERC20 == false)
 
     await nftDatatoken.addERC20Deployer(nftAddress, nftOwner, user1)
@@ -190,7 +256,23 @@ describe('NFTDatatoken', () => {
     assert((await nftDatatoken.getPermissions(nftAddress, user1)).deployERC20 == false)
   })
 
-  it('#addMetadataUpdate #removeMetadataUpdate - should add and remove from Metadata Updater if Manager', async () => {
+  it('#addMetadataUpdate #removeMetadataUpdate - should fail to add and remove Metadata Updater if NOT Manager', async () => {
+    assert((await nftDatatoken.getPermissions(nftAddress, user1)).manager == false)
+
+    try {
+      await nftDatatoken.addMetadataUpdater(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
+
+    try {
+      await nftDatatoken.removeMetadataUpdater(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
+  })
+
+  it('#addMetadataUpdate #removeMetadataUpdate - should add and remove Metadata Updater if Manager', async () => {
     assert((await nftDatatoken.getPermissions(nftAddress, user1)).updateMetadata == false)
 
     await nftDatatoken.addMetadataUpdater(nftAddress, nftOwner, user1)
@@ -238,9 +320,25 @@ describe('NFTDatatoken', () => {
     // PROPOSE NFT ADDRESS AS MINTER
     await v3Contract.methods.proposeMinter(nftAddress).send({ from: nftOwner })
   })
+  it('#wrapV3DT - should fail to call wrapV3DT if NOT NFT OWNER', async () => {
+    try {
+      await nftDatatoken.wrapV3DT(nftAddress, user1, v3ContractAddress, user2)
+    } catch (e) {
+      assert(e.message == 'Caller is not NFT Owner')
+    }
+  })
 
   it('#wrapV3DT - nftOwner calls wrapV3DT and set himself as minter at the 721 level', async () => {
     await nftDatatoken.wrapV3DT(nftAddress, nftOwner, v3ContractAddress, nftOwner)
+  })
+
+  it('#mintV3DT - should fail to mint V3Datatoken if not v3Minter ', async () => {
+    assert((await nftDatatoken.getPermissions(nftAddress, user1)).v3Minter == false)
+    try {
+      await nftDatatoken.mintV3DT(nftAddress, user1, v3ContractAddress, user2, '10')
+    } catch (e) {
+      assert(e.message == 'Caller is not v3Minter')
+    }
   })
 
   it('#mintV3DT - nftOwner has v3Minter permission and mint some V3ERC20 to user2', async () => {
@@ -252,6 +350,16 @@ describe('NFTDatatoken', () => {
       (await v3Contract.methods.balanceOf(user2).call()).toString() ==
         nftDatatoken.toWei('10')
     )
+  })
+
+  it('#addV3Minter - should fail to add a new V3 minter if NOT Manager', async () => {
+    assert((await nftDatatoken.getPermissions(nftAddress, user1)).manager == false)
+
+    try {
+      await nftDatatoken.addV3Minter(nftAddress, user1, user2)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
   })
 
   it('#addV3Minter - manager succeed to add a new V3 minter, then new v3Minter mints', async () => {
@@ -269,12 +377,45 @@ describe('NFTDatatoken', () => {
     )
   })
 
+  it('#removeV3Minter - fail to remove v3Minter if not Manager', async () => {
+    assert((await nftDatatoken.getPermissions(nftAddress, nftOwner)).v3Minter == true)
+
+    try {
+      await nftDatatoken.removeV3Minter(nftAddress, user1, nftOwner)
+    } catch (e) {
+      assert(e.message == 'Caller is not Manager')
+    }
+  })
+
   it('#removeV3Minter - manager succeed to remove a V3 minter', async () => {
     assert((await nftDatatoken.getPermissions(nftAddress, user2)).v3Minter == true)
 
     await nftDatatoken.removeV3Minter(nftAddress, nftOwner, user2)
 
     assert((await nftDatatoken.getPermissions(nftAddress, user2)).v3Minter == false)
+  })
+
+  it('#setDataV3 - should fail to set DataV3 (update metadata) if not V3 Minter', async () => {
+    const keyV3 = web3.utils.keccak256(v3ContractAddress)
+    const newValue = web3.utils.asciiToHex('SomeData')
+
+    assert((await nftDatatoken.getData(nftAddress, keyV3)) == null)
+    assert((await nftDatatoken.getPermissions(nftAddress, user1)).v3Minter == false)
+
+    try {
+      await nftDatatoken.setDataV3(
+        nftAddress,
+        user1,
+        v3ContractAddress,
+        newValue,
+        flags,
+        data
+      )
+    } catch (e) {
+      assert(e.message == 'Caller is not v3Minter')
+    }
+
+    assert((await nftDatatoken.getData(nftAddress, keyV3)) == null)
   })
 
   it('#setDataV3 - v3 Minter should succed to set DataV3 (update metadata)', async () => {
@@ -293,6 +434,16 @@ describe('NFTDatatoken', () => {
     )
 
     assert((await nftDatatoken.getData(nftAddress, keyV3)) == newValue)
+  })
+
+  it('#transferNFT - should fail to transfer the NFT and clean all permissions, if NOT NFT Owner', async () => {
+    assert((await nftDatatoken.getOwner(nftAddress)) != user1)
+
+    try {
+      await nftDatatoken.transferNFT(nftAddress, user1, user1)
+    } catch (e) {
+      assert(e.message == 'Caller is not NFT Owner')
+    }
   })
 
   it('#transferNFT - should transfer the NFT and clean all permissions, set new owner as manager', async () => {

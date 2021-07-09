@@ -1,8 +1,8 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json' 
-import defaultNFTDatatokenABI from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC721Template.sol/ERC721Template.json' 
+import defaultFactory721ABI from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json'
+import defaultNFTDatatokenABI from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC721Template.sol/ERC721Template.json'
 import { Logger, getFairGasPrice } from '../utils'
 import wordListDefault from '../data/words.json'
 import { TransactionReceipt } from 'web3-core'
@@ -10,15 +10,12 @@ import BigNumber from 'bignumber.js'
 import Decimal from 'decimal.js'
 import { Contract } from 'web3-eth-contract'
 
-
 interface Roles {
- 
-    manager: boolean;
-    deployERC20: boolean;
-    updateMetadata: boolean;
-    store: boolean;
-    v3Minter: boolean;
-
+  manager: boolean
+  deployERC20: boolean
+  updateMetadata: boolean
+  store: boolean
+  v3Minter: boolean
 }
 // TODO: add updateMetadata function
 /**
@@ -42,32 +39,27 @@ export class NFTDataToken {
    * @param {Web3} web3
    */
   constructor(
-   // nftAddress: string,
-   // factory721Address: string,
-  //  factory721ABI: AbiItem | AbiItem[],
+    // nftAddress: string,
+    // factory721Address: string,
+    //  factory721ABI: AbiItem | AbiItem[],
     web3: Web3,
     logger: Logger,
     nftDatatokenABI?: AbiItem | AbiItem[],
     startBlock?: number
-    
   ) {
-   // this.factory721Address = factory721Address
-  //  this.factory721ABI = factory721ABI || (defaultFactory721ABI.abi as AbiItem[])
+    // this.factory721Address = factory721Address
+    //  this.factory721ABI = factory721ABI || (defaultFactory721ABI.abi as AbiItem[])
     this.nftDatatokenABI = nftDatatokenABI || (defaultNFTDatatokenABI.abi as AbiItem[])
     this.web3 = web3
     this.logger = logger
     this.startBlock = startBlock || 0
-    
   }
 
   /**
    * Generate new datatoken name & symbol from a word list
    * @return {<{ name: String; symbol: String }>} datatoken name & symbol. Produces e.g. "Endemic Jellyfish Token" & "ENDJEL-45"
    */
-  public generateDtName(wordList?: {
-    nouns: string[]
-    adjectives: string[]
-  }): {
+  public generateDtName(wordList?: { nouns: string[]; adjectives: string[] }): {
     name: string
     symbol: string
   } {
@@ -89,7 +81,6 @@ export class NFTDataToken {
     return { name, symbol }
   }
 
-
   /**
    * Create new ERC20 datatoken - only user with ERC20Deployer permission can succeed
    * @param {String} address
@@ -104,7 +95,7 @@ export class NFTDataToken {
   public async createERC20(
     nftAddress: string,
     address: string,
-    
+
     minter: string,
     cap: string,
     name?: string,
@@ -159,12 +150,11 @@ export class NFTDataToken {
   public async addManager(
     nftAddress: string,
     address: string,
-   
+
     manager: string
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner(nftAddress)) != address) {
-      this.logger.error(`Caller is not NFT Owner`)
-      return null
+      throw new Error(`Caller is not NFT Owner`)
     }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -201,8 +191,7 @@ export class NFTDataToken {
     manager: string
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner(nftAddress)) != address) {
-      this.logger.error(`Caller is not NFT Owner`)
-      return null
+      throw new Error(`Caller is not NFT Owner`)
     }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -242,6 +231,9 @@ export class NFTDataToken {
     value: string,
     data: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -281,6 +273,10 @@ export class NFTDataToken {
     key: string,
     value: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).store != true) {
+      throw new Error(`Caller is not Store Updater`)
+    }
+    
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -321,6 +317,9 @@ export class NFTDataToken {
     flags: string,
     data: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).v3Minter != true) {
+      throw new Error(`Caller is not v3Minter`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -351,9 +350,12 @@ export class NFTDataToken {
    */
 
   public async cleanPermissions(
-    nftAddress:string,
+    nftAddress: string,
     address: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner(nftAddress)) != address) {
+      throw new Error(`Caller is not NFT Owner`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -375,8 +377,7 @@ export class NFTDataToken {
 
     return trxReceipt
   }
-  // V3 INTEGRATION 
-  
+  // V3 INTEGRATION
 
   /**
    * Integration for V3 erc20 datatoken - Only erc20.minter() can do it.
@@ -394,6 +395,9 @@ export class NFTDataToken {
     erc20Address: string,
     minter: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getOwner(nftAddress)) != address) {
+      throw new Error(`Caller is not NFT Owner`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -433,6 +437,9 @@ export class NFTDataToken {
     to: string,
     value: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).v3Minter != true) {
+      throw new Error(`Caller is not v3Minter`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -469,6 +476,9 @@ export class NFTDataToken {
     address: string,
     v3minter: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -499,14 +509,13 @@ export class NFTDataToken {
    * @return {Promise<TransactionReceipt>} transactionId
    */
   public async removeV3Minter(
-    nftAddress:string,
+    nftAddress: string,
     address: string,
     v3minter: string
   ): Promise<TransactionReceipt> {
-    // if ((await this.getPermissions(nftAddress,address)).manager == true) {
-    //   this.logger.error(`Caller is not NFT Owner`)
-    //   return null
-    // }
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -542,8 +551,7 @@ export class NFTDataToken {
     to: string
   ): Promise<TransactionReceipt> {
     if ((await this.getOwner(nftAddress)) != address) {
-      this.logger.error(`Caller is not NFT Owner`)
-      return null
+      throw new Error(`Caller is not NFT Owner`)
     }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -579,6 +587,9 @@ export class NFTDataToken {
     address: string,
     storeUpdater: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -613,6 +624,9 @@ export class NFTDataToken {
     address: string,
     storeUpdater: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -637,8 +651,6 @@ export class NFTDataToken {
     return trxReceipt
   }
 
-
-
   /**
    * Add ERC20Deployer permission - only Manager can succeed
    * @param {String} address
@@ -646,11 +658,14 @@ export class NFTDataToken {
    * @param {String} erc20Deployer User which is going to have erc20Deployer permission
    * @return {Promise<TransactionReceipt>} transactionId
    */
-   public async addERC20Deployer(
+  public async addERC20Deployer(
     nftAddress: string,
     address: string,
     erc20Deployer: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     // Create 721contract object
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
@@ -665,15 +680,16 @@ export class NFTDataToken {
 
     // Invoke addManager function of the contract
 
-    const trxReceipt = await contract721.methods.addToCreateERC20List(erc20Deployer).send({
-      from: address,
-      gas: estGas + 1,
-      gasPrice: await getFairGasPrice(this.web3)
-    })
+    const trxReceipt = await contract721.methods
+      .addToCreateERC20List(erc20Deployer)
+      .send({
+        from: address,
+        gas: estGas + 1,
+        gasPrice: await getFairGasPrice(this.web3)
+      })
 
     return trxReceipt
   }
-
 
   /**
    * Remove ERC20Deployer permission - only Manager can succeed
@@ -682,11 +698,14 @@ export class NFTDataToken {
    * @param {String} erc20Deployer Revoke Permission to this user
    * @return {Promise<TransactionReceipt>} transactionId
    */
-   public async removeERC20Deployer(
-    nftAddress:string,
+  public async removeERC20Deployer(
+    nftAddress: string,
     address: string,
     erc20Deployer: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -711,54 +730,58 @@ export class NFTDataToken {
     return trxReceipt
   }
 
-
-   /**
+  /**
    * Add Metadata Updater permission - only Manager can succeed
    * @param {String} address
    * @param {String} nftAddress
    * @param {String} metadataUpdater User which is going to have metadata updater permission
    * @return {Promise<TransactionReceipt>} transactionId
    */
-    public async addMetadataUpdater(
-      nftAddress:string,
-      address: string,
-      metadataUpdater: string
-    ): Promise<TransactionReceipt> {
-      const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
-      const gasLimitDefault = this.GASLIMIT_DEFAULT
-      let estGas
-      try {
-        estGas = await contract721.methods
-          .addToMetadataList(metadataUpdater)
-          .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
-      } catch (e) {
-        estGas = gasLimitDefault
-      }
-  
-      // Invoke addManager function of the contract
-  
-      const trxReceipt = await contract721.methods.addToMetadataList(metadataUpdater).send({
-        from: address,
-        gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3)
-      })
-  
-      return trxReceipt
+  public async addMetadataUpdater(
+    nftAddress: string,
+    address: string,
+    metadataUpdater: string
+  ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await contract721.methods
+        .addToMetadataList(metadataUpdater)
+        .estimateGas({ from: address }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      estGas = gasLimitDefault
     }
 
+    // Invoke addManager function of the contract
 
-     /**
+    const trxReceipt = await contract721.methods.addToMetadataList(metadataUpdater).send({
+      from: address,
+      gas: estGas + 1,
+      gasPrice: await getFairGasPrice(this.web3)
+    })
+
+    return trxReceipt
+  }
+
+  /**
    * Remove Metadata Updater permission - only Manager can succeed
    * @param {String} address
    * @param {String} nftAddress
    * @param {String} metadataUpdater Revoke Permission to this user
    * @return {Promise<TransactionReceipt>} transactionId
    */
-   public async removeMetadataUpdater(
-    nftAddress:string,
+  public async removeMetadataUpdater(
+    nftAddress: string,
     address: string,
     metadataUpdater: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(nftAddress, address)).manager != true) {
+      throw new Error(`Caller is not Manager`)
+    }
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -783,45 +806,42 @@ export class NFTDataToken {
     return trxReceipt
   }
 
-   /** Gets data at a given `key`
+  /** Gets data at a given `key`
    * @param {String} nftAddress
    * @param {String} key the key which value to retrieve
    * @return {Promise<string>} The data stored at the key
    */
-    public async getData(
-      nftAddress: string, 
-      key: string): Promise<string> {
-      const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
-      const trxReceipt = await contract721.methods.getData(key).call()
-      return trxReceipt
-    }
-
+  public async getData(nftAddress: string, key: string): Promise<string> {
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+    const trxReceipt = await contract721.methods.getData(key).call()
+    return trxReceipt
+  }
 
   /** Get Name
    * @param {String} nftAddress
    * @return {Promise<string>} string
    */
-  public async getName(nftAddress:string): Promise<string> {
+  public async getName(nftAddress: string): Promise<string> {
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const trxReceipt = await contract721.methods.name().call()
     return trxReceipt
   }
 
-    /** Get Name
+  /** Get Name
    * @param {String} address
    * @return {Promise<Roles>} string
    */
-     public async getPermissions(nftAddress:string, address:string): Promise<Roles> {
-      const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
-      const trxReceipt = await contract721.methods._getPermissions(address).call()
-      return trxReceipt
-    }
+  public async getPermissions(nftAddress: string, address: string): Promise<Roles> {
+    const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
+    const trxReceipt = await contract721.methods._getPermissions(address).call()
+    return trxReceipt
+  }
 
   /** Get Symbol
    * @param {String} nftAddress
    * @return {Promise<string>} string
    */
-  public async getSymbol(nftAddress:string): Promise<string> {
+  public async getSymbol(nftAddress: string): Promise<string> {
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const trxReceipt = await contract721.methods.symbol().call()
     return trxReceipt
@@ -831,7 +851,7 @@ export class NFTDataToken {
    * @param {String} nftAddress
    * @return {Promise<string>} string
    */
-  public async getOwner(nftAddress:string): Promise<string> {
+  public async getOwner(nftAddress: string): Promise<string> {
     const contract721 = new this.web3.eth.Contract(this.nftDatatokenABI, nftAddress)
     const trxReceipt = await contract721.methods.ownerOf(1).call()
     return trxReceipt
@@ -852,5 +872,4 @@ export class NFTDataToken {
   public fromWei(amount: string): string {
     return this.web3.utils.fromWei(amount)
   }
-
 }

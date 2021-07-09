@@ -107,6 +107,7 @@ describe('DT20 Test', () => {
   })
 
   it('should create a new ERC20 DT Contract from NFT contract', async () => {
+   
     await nftDatatoken.addERC20Deployer(nftAddress,nftOwner, nftOwner)
     erc20Address = await nftDatatoken.createERC20(nftAddress,nftOwner, nftOwner,'1000')
     assert(erc20Address != null)
