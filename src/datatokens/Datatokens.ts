@@ -93,6 +93,9 @@ export class DataTokens {
     amount: string,
     toAddress?: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(dataTokenAddress, address)).minter != true) {
+      throw new Error(`Caller is not Minter`)
+    }
     const datatoken = new this.web3.eth.Contract(this.datatokensABI, dataTokenAddress)
     const capAvailble = await this.getCap(dataTokenAddress)
     if (new Decimal(capAvailble).gte(amount)) {
@@ -132,6 +135,7 @@ export class DataTokens {
     address: string,
     minter: string
   ): Promise<TransactionReceipt> {
+    
     const datatoken = new this.web3.eth.Contract(this.datatokensABI, dataTokenAddress)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -342,6 +346,9 @@ export class DataTokens {
     address: string,
     feeCollector: string
   ): Promise<TransactionReceipt> {
+    if ((await this.getPermissions(dataTokenAddress, address)).feeManager != true) {
+      throw new Error(`Caller is not Fee Manager`)
+    }
     const datatoken = new this.web3.eth.Contract(this.datatokensABI, dataTokenAddress)
 
     const gasLimitDefault = this.GASLIMIT_DEFAULT
