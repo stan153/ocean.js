@@ -538,12 +538,12 @@ export class Assets extends Instantiable {
   ): Promise<any> {
     const provider = await Provider.getInstance(this.instanceConfig)
     await provider.setBaseUrl(serviceEndpoint)
-    const res = await provider.initialize(
-      asset,
-      serviceIndex,
-      serviceType,
-      consumerAddress
-    )
+    let res
+    try {
+      res = await provider.initialize(asset, serviceIndex, serviceType, consumerAddress)
+    } catch (error) {
+      throw new Error(error)
+    }
     if (res === null) return null
     const providerData = JSON.parse(res)
     return providerData
@@ -584,13 +584,19 @@ export class Assets extends Instantiable {
       serviceType = service.type
     }
     try {
-      const providerData = await this.initialize(
-        ddo,
-        serviceType,
-        payerAddress,
-        serviceIndex,
-        service.serviceEndpoint
-      )
+      let providerData
+      try {
+        providerData = await this.initialize(
+          ddo,
+          serviceType,
+          payerAddress,
+          serviceIndex,
+          service.serviceEndpoint
+        )
+      } catch (error) {
+        this.logger.error(error)
+        throw new Error(`${error}`)
+      }
       if (!providerData)
         throw new Error(
           `Order asset failed, Failed to initialize service to compute totalCost for ordering`
@@ -634,7 +640,7 @@ export class Assets extends Instantiable {
       if (txid) return txid.transactionHash
     } catch (e) {
       this.logger.error(`ERROR: Failed to order a service : ${e.message}`)
-      throw new Error(`Failed to order a service: ${e.message}`)
+      throw new Error(`${e.message}`)
     }
   }
 
