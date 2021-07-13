@@ -51,9 +51,9 @@ export class Ocean extends Instantiable {
     instance.assets = await Assets.getInstance(instanceConfig)
     instance.compute = await Compute.getInstance(instanceConfig)
     instance.datatokens = new DataTokens(
-      instanceConfig.config.datatokensABI,
       instanceConfig.config.web3Provider,
       instanceConfig.logger,
+      instanceConfig.config.datatokensABI,
       instanceConfig.config.startBlock
     )
 
