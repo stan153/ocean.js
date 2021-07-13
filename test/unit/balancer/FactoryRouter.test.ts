@@ -67,6 +67,53 @@ describe('Factory Router', () => {
     router = new FactoryRouter(web3, LoggerInstance, contracts.routerAddress)
   })
 
+  it('#deployPool - should deploy a new pool with 2 tokens on BAL V2', async () => {
+    let tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+    tokens.sort((a:any, b:any) => a- b);
+
+    const weights = ['0.5', '0.5']
+
+    const NAME = 'Two-token Pool'
+    const SYMBOL = 'OCEAN-DT-50-50'
+    const swapFeePercentage = 3e15 // 0.3%
+    const marketFee = 1e15
+
+    const poolAddress = await router.deployPool(
+      contractDeployer,
+      NAME,
+      SYMBOL,
+      tokens,
+      weights,
+      swapFeePercentage,
+      marketFee,
+      contractDeployer
+    )
+    assert(poolAddress != null)
+  })
+
+  it('#deployPool - should deploy a new pool with 3 tokens on BAL V2', async () => {
+    let tokens = [contracts.mockOceanAddress, contracts.mockDT20Address, contracts.mockERC20Address]
+    tokens.sort((a:any, b:any) => a- b);
+    const weights = ['0.3','0.5','0.2']
+
+    const NAME = 'Three-token Pool'
+    const SYMBOL = 'OCEAN-DT-50-50'
+    const swapFeePercentage = 3e15 // 0.3%
+    const marketFee = 1e15
+
+    const poolAddress = await router.deployPool(
+      contractDeployer,
+      NAME,
+      SYMBOL,
+      tokens,
+      weights,
+      swapFeePercentage,
+      marketFee,
+      contractDeployer
+    )
+    assert(poolAddress != null)
+  })
+
   it('#deployPoolWithFork - should deploy a new pool', async () => {
     const poolAddress = await router.deployPoolWithFork(contractDeployer, controller)
     assert(poolAddress != null)

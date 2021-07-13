@@ -48,8 +48,8 @@ export class FactoryRouter {
     account: string,
     name: string,
     symbol: string,
-    tokens: string[],
-    weights: number[],
+    tokens: string[], // tokens must be sorted from smaller to bigger (using .sort() for example)
+    weights: string[], // IMPORTANT: weights MUST be in the same order of the tokens array. tokens[i] => weights[i]
     swapFeePercentage: number,
     swapMarketFee: number,
     owner: string
@@ -59,6 +59,10 @@ export class FactoryRouter {
       return null
     }
 
+    let weightsInWei = []
+    for (let i=0; i< weights.length;i++) {
+      weightsInWei.push(this.web3.utils.toWei(weights[i]))
+    }
     let poolAddress = null
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
@@ -68,7 +72,7 @@ export class FactoryRouter {
           name,
           symbol,
           tokens,
-          weights,
+          weightsInWei,
           swapFeePercentage,
           swapMarketFee,
           owner
@@ -81,7 +85,7 @@ export class FactoryRouter {
     }
     try {
       const trxReceipt = await this.router.methods
-        .deployPool(name, tokens, weights, swapFeePercentage, swapMarketFee, owner)
+        .deployPool(name, symbol,tokens, weightsInWei, swapFeePercentage, swapMarketFee, owner)
         .send({ from: account, gas: estGas + 1 })
       poolAddress = trxReceipt.events.NewPool.returnValues[0]
     } catch (e) {
