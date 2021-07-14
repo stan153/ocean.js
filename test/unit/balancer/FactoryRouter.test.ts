@@ -69,7 +69,8 @@ describe('Factory Router', () => {
 
   it('#deployPool - should deploy a new pool with 2 tokens on BAL V2', async () => {
     let tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
-    tokens.sort((a:any, b:any) => a- b);
+    //tokens.sort((a:any, b:any) => a-b);
+    console.log(tokens)
 
     const weights = ['0.5', '0.5']
 
@@ -89,11 +90,14 @@ describe('Factory Router', () => {
       contractDeployer
     )
     assert(poolAddress != null)
+
   })
 
   it('#deployPool - should deploy a new pool with 3 tokens on BAL V2', async () => {
     let tokens = [contracts.mockOceanAddress, contracts.mockDT20Address, contracts.mockERC20Address]
-    tokens.sort((a:any, b:any) => a- b);
+    console.log(tokens)
+    tokens.sort((a:any, b:any) => a-b);
+    console.log(tokens)
     const weights = ['0.3','0.5','0.2']
 
     const NAME = 'Three-token Pool'

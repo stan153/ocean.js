@@ -1,7 +1,8 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 import { Logger } from '../utils'
-import defaultRouterABI from '@oceanprotocol/contracts/artifacts/contracts/pools/factories/OceanPoolFactoryRouter.sol/OceanPoolFactoryRouter.json' // TODO : update
+import defaultRouterABI from '@oceanprotocol/contracts/artifacts/contracts/pools/factories/OceanPoolFactoryRouter.sol/OceanPoolFactoryRouter.json'
+import defaultVaultABI from '@oceanprotocol/contracts/artifacts/contracts/interfaces/IVault.sol/IVault.json'
 import { TransactionReceipt } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
 
@@ -9,9 +10,12 @@ export class FactoryRouter {
   public GASLIMIT_DEFAULT = 1000000
   public web3: Web3 = null
   public routerABI: AbiItem | AbiItem[]
-  public routerAddress: string
+  public vaultABI: AbiItem | AbiItem[]
+  public routerAddress: string 
+  public vaultAddress: string 
   public logger: Logger
   public router: Contract
+  public vault: Contract
 
   /**
    * Instantiate FactoryRouter (independently of Ocean).
@@ -24,13 +28,17 @@ export class FactoryRouter {
     web3: Web3,
     logger: Logger,
     routerAddress: string,
+    vaultAddress: string,
     routerABI?: AbiItem | AbiItem[]
   ) {
     this.web3 = web3
     this.routerAddress = routerAddress
+    this.vaultAddress = vaultAddress
     this.routerABI = routerABI || (defaultRouterABI.abi as AbiItem[])
+    this.vaultABI = defaultVaultABI.abi as AbiItem[]
     this.logger = logger
     this.router = new this.web3.eth.Contract(this.routerABI, this.routerAddress)
+    this.vault = new this.web3.eth.Contract(this.vaultABI, this.vaultAddress)
   }
 
   /**
@@ -58,9 +66,13 @@ export class FactoryRouter {
       this.logger.error('ERROR: Web3 object is null')
       return null
     }
+    let check = tokens.sort((a: any, b: any) => a - b)
+    if (check != tokens) {
+      throw new Error(`Tokens not SORTED BAL#101`)
+    }
 
     let weightsInWei = []
-    for (let i=0; i< weights.length;i++) {
+    for (let i = 0; i < weights.length; i++) {
       weightsInWei.push(this.web3.utils.toWei(weights[i]))
     }
     let poolAddress = null
@@ -85,7 +97,15 @@ export class FactoryRouter {
     }
     try {
       const trxReceipt = await this.router.methods
-        .deployPool(name, symbol,tokens, weightsInWei, swapFeePercentage, swapMarketFee, owner)
+        .deployPool(
+          name,
+          symbol,
+          tokens,
+          weightsInWei,
+          swapFeePercentage,
+          swapMarketFee,
+          owner
+        )
         .send({ from: account, gas: estGas + 1 })
       poolAddress = trxReceipt.events.NewPool.returnValues[0]
     } catch (e) {
@@ -183,6 +203,49 @@ export class FactoryRouter {
    */
   public async getOwner(): Promise<string> {
     const trxReceipt = await this.router.methods.routerOwner().call()
+    return trxReceipt
+  }
+
+  /**
+   * Creates a new pool on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param sender pool symbol
+   * @param recipient array of token addresses to be added into the pool
+   * @param request array of token weights (same order as tokens array)
+   * @return txId
+   */
+  public async joinPoolV2(
+    account: string,
+    poolId: number,
+    sender: string,
+    recipient: string,
+    request: string
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    let trxReceipt = null
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .joinPool(poolId, sender, recipient, request)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .joinPool(poolId, sender, recipient, request)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
+    }
     return trxReceipt
   }
 }
