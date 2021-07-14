@@ -3,19 +3,25 @@ import { AbiItem } from 'web3-utils/types'
 import { Logger } from '../utils'
 import defaultRouterABI from '@oceanprotocol/contracts/artifacts/contracts/pools/factories/OceanPoolFactoryRouter.sol/OceanPoolFactoryRouter.json'
 import defaultVaultABI from '@oceanprotocol/contracts/artifacts/contracts/interfaces/IVault.sol/IVault.json'
+import defaultPoolABI from '@oceanprotocol/contracts/artifacts/contracts/interfaces/IPool.sol/IPool.json'
+import defaultERC20ABI from '@oceanprotocol/contracts/artifacts/contracts/interfaces/IERC20.sol/IERC20.json'
 import { TransactionReceipt } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
+import Decimal from 'decimal.js'
 
+// TODO: add exitPool function, add swaps function
 export class FactoryRouter {
   public GASLIMIT_DEFAULT = 1000000
   public web3: Web3 = null
   public routerABI: AbiItem | AbiItem[]
   public vaultABI: AbiItem | AbiItem[]
-  public routerAddress: string 
-  public vaultAddress: string 
+  public routerAddress: string
+  public vaultAddress: string
   public logger: Logger
   public router: Contract
   public vault: Contract
+  public poolABI: AbiItem | AbiItem[]
+  public erc20ABI: AbiItem | AbiItem[]
 
   /**
    * Instantiate FactoryRouter (independently of Ocean).
@@ -36,6 +42,8 @@ export class FactoryRouter {
     this.vaultAddress = vaultAddress
     this.routerABI = routerABI || (defaultRouterABI.abi as AbiItem[])
     this.vaultABI = defaultVaultABI.abi as AbiItem[]
+    this.poolABI = defaultPoolABI.abi as AbiItem[]
+    this.erc20ABI = defaultERC20ABI.abi as AbiItem[]
     this.logger = logger
     this.router = new this.web3.eth.Contract(this.routerABI, this.routerAddress)
     this.vault = new this.web3.eth.Contract(this.vaultABI, this.vaultAddress)
@@ -206,33 +214,163 @@ export class FactoryRouter {
     return trxReceipt
   }
 
+  /** Get Pool ID
+   * @return {Promise<string>} pool ID
+   */
+  public async getPoolId(poolAddress: string): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.getPoolId().call()
+    return trxReceipt
+  }
+
+  /** Get LP Balance
+   * @return {Promise<string>} LP balance
+   */
+  public async getLPBalance(account: string, poolAddress: string): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.erc20ABI, poolAddress)
+    const trxReceipt = await pool.methods.balanceOf(account).call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+
   /**
-   * Creates a new pool on BALANCER V2
+   * Approve spender to spent amount tokens
+   * @param {String} account
+   * @param {String} tokenAddress
+   * @param {String} spender
+   * @param {String} amount  (always expressed as wei)
+   * @param {String} force  if true, will overwrite any previous allowence. Else, will check if allowence is enough and will not send a transaction if it's not needed
+   */
+  async approveVault(
+    account: string,
+    tokenAddress: string,
+    //spender: string,
+    amount: string,
+    force = false
+  ): Promise<TransactionReceipt> {
+    const minABI = [
+      {
+        constant: false,
+        inputs: [
+          {
+            name: '_spender',
+            type: 'address'
+          },
+          {
+            name: '_value',
+            type: 'uint256'
+          }
+        ],
+        name: 'approve',
+        outputs: [
+          {
+            name: '',
+            type: 'bool'
+          }
+        ],
+        payable: false,
+        stateMutability: 'nonpayable',
+        type: 'function'
+      }
+    ] as AbiItem[]
+    const token = new this.web3.eth.Contract(minABI, tokenAddress, {
+      from: account
+    })
+    if (!force) {
+      const currentAllowence = await this.allowanceVault(tokenAddress, account)
+      if (new Decimal(currentAllowence).greaterThanOrEqualTo(amount)) {
+        // we have enough
+        return null
+      }
+    }
+    let result = null
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await token.methods
+        .approve(this.vaultAddress, this.web3.utils.toWei(amount))
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      estGas = gasLimitDefault
+    }
+
+    try {
+      result = await token.methods.approve(this.vaultAddress, this.web3.utils.toWei(amount)).send({
+        from: account,
+        gas: estGas + 1
+        //  gasPrice: await getFairGasPrice(this.web3)
+      })
+    } catch (e) {
+      this.logger.error(`ERRPR: Failed to approve spender to spend tokens : ${e.message}`)
+    }
+    return result
+  }
+
+  /**
+   * Get Alloance for both DataToken and Ocean
+   * @param {String } tokenAdress
+   * @param {String} owner
+  
+   */
+  public async allowanceVault(
+    tokenAdress: string,
+    owner: string,
+    //spender: string
+  ): Promise<string> {
+    const erc20 = new this.web3.eth.Contract(this.erc20ABI, tokenAdress)
+    const trxReceipt = await erc20.methods.allowance(owner, this.vaultAddress).call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+  /**
+   * Add initial liquidity on BALANCER V2
    * @param account user which triggers transaction
    * @param poolId pool name
-   * @param sender pool symbol
-   * @param recipient array of token addresses to be added into the pool
-   * @param request array of token weights (same order as tokens array)
+   * @param sender user who sends the tokens, if != account must authorize account
+   * @param recipient receiver of LP tokens
    * @return txId
    */
   public async joinPoolV2(
     account: string,
-    poolId: number,
-    sender: string,
-    recipient: string,
-    request: string
+    poolAddress: string,
+    // sender: string,
+    // recipient: string,
+    tokens: string[],
+    initialBalances: string[],
+    joinKind: number
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
       return null
     }
 
+    // 1 DT = 10 Ocean
+    let initBalancesInWei = []
+    for (let i = 0; i < initialBalances.length; i++) {
+      initBalancesInWei.push(this.web3.utils.toWei(initialBalances[i]))
+    }
+
+    const JOIN_KIND_INIT = joinKind // UPDATE WHEN DECIDING IF THERE'S GONNA BE 2 SEPARATE FUNCTIONS FOR INITIAL LIQ ADD AND GENERAL ADD
+
+    // Construct magic userData
+    const initUserData = this.web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256[]'],
+      [JOIN_KIND_INIT, initBalancesInWei]
+    )
+
+    const joinPoolRequest = {
+      assets: tokens,
+      maxAmountsIn: initBalancesInWei,
+      userData: initUserData,
+      fromInternalBalance: false
+    }
+
     let trxReceipt = null
+    const poolId = await this.getPoolId(poolAddress)
+    console.log(poolId)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
       estGas = await this.vault.methods
-        .joinPool(poolId, sender, recipient, request)
+        .joinPool(poolId, account, account, joinPoolRequest)
         .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
       this.logger.log('Error estimate gas deployPool')
@@ -241,10 +379,10 @@ export class FactoryRouter {
     }
     try {
       trxReceipt = await this.vault.methods
-        .joinPool(poolId, sender, recipient, request)
+        .joinPool(poolId, account, account, joinPoolRequest)
         .send({ from: account, gas: estGas + 1 })
     } catch (e) {
-      this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
+      this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
     }
     return trxReceipt
   }

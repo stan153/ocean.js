@@ -14,6 +14,7 @@ import { NFTDataToken } from '../../../src/datatokens/NFTDatatoken'
 import { NFTFactory } from '../../../src/factories/NFTFactory'
 import { DT20Factory } from '../../../src/factories/DT20Factory'
 import { FactoryRouter } from '../../../src/balancer/FactoryRouter'
+import { POINT_CONVERSION_COMPRESSED } from 'constants'
 const web3 = new Web3('http://127.0.0.1:8545')
 
 describe('Factory Router', () => {
@@ -22,6 +23,7 @@ describe('Factory Router', () => {
   let user2: string
   let contracts: TestRouterHandler
   let router: FactoryRouter
+  let poolAddress: string
   let nftDatatoken: NFTDataToken
   let nftFactory: NFTFactory
   let erc20Factory: DT20Factory
@@ -36,7 +38,7 @@ describe('Factory Router', () => {
   const flags = web3.utils.asciiToHex(
     'f8929916089218bdb4aa78c3ecd16633afd44b8aef89299160'
   )
-
+  const vaultAddress = '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
   // setNewData() arguments
   const key = web3.utils.keccak256('ARBITRARY_KEY')
   const value = web3.utils.asciiToHex('SomeData')
@@ -64,13 +66,16 @@ describe('Factory Router', () => {
   })
 
   it('initialize FactoryRouter Class', async () => {
-    router = new FactoryRouter(web3, LoggerInstance, contracts.routerAddress)
+    router = new FactoryRouter(
+      web3,
+      LoggerInstance,
+      contracts.routerAddress,
+      vaultAddress
+    )
   })
 
   it('#deployPool - should deploy a new pool with 2 tokens on BAL V2', async () => {
-    let tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
-    //tokens.sort((a:any, b:any) => a-b);
-    console.log(tokens)
+    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
 
     const weights = ['0.5', '0.5']
 
@@ -79,7 +84,7 @@ describe('Factory Router', () => {
     const swapFeePercentage = 3e15 // 0.3%
     const marketFee = 1e15
 
-    const poolAddress = await router.deployPool(
+    poolAddress = await router.deployPool(
       contractDeployer,
       NAME,
       SYMBOL,
@@ -90,22 +95,99 @@ describe('Factory Router', () => {
       contractDeployer
     )
     assert(poolAddress != null)
+  })
 
+  it('#deployPool - should deploy a new pool with 2 tokens on BAL V2, then ADD LIQUIDITY', async () => {
+    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+
+    const weights = ['0.5', '0.5']
+
+    const NAME = 'Two-token Pool'
+    const SYMBOL = 'OCEAN-DT-50-50'
+    const swapFeePercentage = 3e15 // 0.3%
+    const marketFee = 1e15
+
+    poolAddress = await router.deployPool(
+      contractDeployer,
+      NAME,
+      SYMBOL,
+      tokens,
+      weights,
+      swapFeePercentage,
+      marketFee,
+      contractDeployer
+    )
+    assert(poolAddress != null)
+  })
+  it('#joinPoolV2 - should add INITIAL liquidity', async () => {
+    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+
+    await router.approveVault(
+      contractDeployer,
+      contracts.mockOceanAddress,
+      '10000000'
+    )
+    await router.approveVault(
+      contractDeployer,
+      contracts.mockDT20Address,
+      '10000000'
+    )
+
+    const initialBalances = ['50', '100']
+
+    const txReceipt = await router.joinPoolV2(
+      contractDeployer,
+      poolAddress,
+      tokens,
+      initialBalances,
+      0
+    )
+    assert(txReceipt != null,'JoinPool tx failed')
+    const event = txReceipt.events.PoolBalanceChanged
+
+    assert(event.returnValues.liquidityProvider == contractDeployer)
+    assert(event.returnValues.poolId == (await router.getPoolId(poolAddress)))
+    assert(event.returnValues.deltas[0] == web3.utils.toWei(initialBalances[0]))
+    assert(event.returnValues.deltas[1] == web3.utils.toWei(initialBalances[1]))
+    console.log(await router.getLPBalance(contractDeployer, poolAddress))
+  })
+
+  it('#joinPoolV2 - should add EXTRA liquidity', async () => {
+    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+    const newBalances = ['30', '50']
+    const txReceipt = await router.joinPoolV2(
+      contractDeployer,
+      poolAddress,
+      tokens,
+      newBalances,
+      1
+    )
+
+    const event = txReceipt.events.PoolBalanceChanged
+
+    assert(event.returnValues.deltas[0] == web3.utils.toWei(newBalances[0]))
+
+    assert(event.returnValues.deltas[1] == web3.utils.toWei(newBalances[1]))
+    console.log(await router.getLPBalance(contractDeployer, poolAddress))
   })
 
   it('#deployPool - should deploy a new pool with 3 tokens on BAL V2', async () => {
-    let tokens = [contracts.mockOceanAddress, contracts.mockDT20Address, contracts.mockERC20Address]
-    console.log(tokens)
-    tokens.sort((a:any, b:any) => a-b);
-    console.log(tokens)
-    const weights = ['0.3','0.5','0.2']
+    const tokens = [
+      contracts.mockOceanAddress,
+      contracts.mockDT20Address,
+      contracts.mockERC20Address
+    ]
+    // console.log(tokens)
+    // tokens.sort((a:any, b:any) => a-b);
+    // console.log(tokens)
+    const weights = ['0.3', '0.5', '0.2']
 
     const NAME = 'Three-token Pool'
     const SYMBOL = 'OCEAN-DT-50-50'
     const swapFeePercentage = 3e15 // 0.3%
     const marketFee = 1e15
 
-    const poolAddress = await router.deployPool(
+    poolAddress = await router.deployPool(
       contractDeployer,
       NAME,
       SYMBOL,
@@ -119,7 +201,7 @@ describe('Factory Router', () => {
   })
 
   it('#deployPoolWithFork - should deploy a new pool', async () => {
-    const poolAddress = await router.deployPoolWithFork(contractDeployer, controller)
+    poolAddress = await router.deployPoolWithFork(contractDeployer, controller)
     assert(poolAddress != null)
   })
 
