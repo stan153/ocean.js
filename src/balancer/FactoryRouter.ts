@@ -323,7 +323,72 @@ export class FactoryRouter {
     return this.web3.utils.fromWei(trxReceipt)
   }
   /**
-   * Add liquidity on BALANCER V2
+   * Add INITIAL liquidity on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param sender user who sends the tokens, if != account must authorize account
+   * @param recipient receiver of LP tokens
+   * @return txId
+   */
+  public async initialJoinPoolV2(
+    account: string,
+    poolAddress: string,
+    // sender: string,
+    // recipient: string,
+    tokens: string[],
+    amountsIn?: string[]
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    let amountsInWei = []
+
+    for (let i = 0; i < amountsIn.length; i++) {
+      amountsInWei.push(this.web3.utils.toWei(amountsIn[i]))
+    }
+
+    let userData
+    const joinKind = 0
+    userData = this.web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256[]'],
+      [joinKind, amountsInWei]
+    )
+
+    const joinPoolRequest = {
+      assets: tokens,
+      maxAmountsIn: amountsInWei,
+      userData: userData,
+      fromInternalBalance: false
+    }
+
+    let trxReceipt = null
+    const poolId = await this.getPoolId(poolAddress)
+    console.log(poolId)
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .joinPool(poolId, account, account, joinPoolRequest)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .joinPool(poolId, account, account, joinPoolRequest)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Add general liquidity on BALANCER V2
    * @param account user which triggers transaction
    * @param poolId pool name
    * @param sender user who sends the tokens, if != account must authorize account
@@ -336,32 +401,96 @@ export class FactoryRouter {
     // sender: string,
     // recipient: string,
     tokens: string[],
-    initialBalances: string[],
-    joinKind: number
+    amountsIn: string[],
+    amountBPT: string
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
       return null
     }
 
-    // 1 DT = 10 Ocean
-    let initBalancesInWei = []
-    for (let i = 0; i < initialBalances.length; i++) {
-      initBalancesInWei.push(this.web3.utils.toWei(initialBalances[i]))
+    let amountsInWei = []
+
+    for (let i = 0; i < amountsIn.length; i++) {
+      amountsInWei.push(this.web3.utils.toWei(amountsIn[i]))
     }
 
-    const JOIN_KIND_INIT = joinKind // UPDATE WHEN DECIDING IF THERE'S GONNA BE 2 SEPARATE FUNCTIONS FOR INITIAL LIQ ADD AND GENERAL ADD
-
-    // Construct magic userData
-    const initUserData = this.web3.eth.abi.encodeParameters(
-      ['uint256', 'uint256[]'],
-      [JOIN_KIND_INIT, initBalancesInWei]
+    const joinKind = 1
+    const userData = this.web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256[]', 'uint256'],
+      [joinKind, amountsInWei, this.web3.utils.toWei(amountBPT)]
     )
 
     const joinPoolRequest = {
       assets: tokens,
-      maxAmountsIn: initBalancesInWei,
-      userData: initUserData,
+      maxAmountsIn: amountsInWei,
+      userData: userData,
+      fromInternalBalance: false
+    }
+
+    let trxReceipt = null
+    const poolId = await this.getPoolId(poolAddress)
+    console.log(poolId)
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .joinPool(poolId, account, account, joinPoolRequest)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .joinPool(poolId, account, account, joinPoolRequest)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Add single token liquidity on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param sender user who sends the tokens, if != account must authorize account
+   * @param recipient receiver of LP tokens
+   * @return txId
+   */
+  public async singleJoinPoolV2(
+    account: string,
+    poolAddress: string,
+    // sender: string,
+    // recipient: string,
+    tokens: string[],
+    maxAmountsIn: string[],
+    amountBPT: string,
+    tokenIndex: number
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    let amountsInWei = []
+    const joinKind = 2
+    
+    for (let i = 0; i < maxAmountsIn.length; i++) {
+      amountsInWei.push(this.web3.utils.toWei(maxAmountsIn[i]))
+    }
+
+    const userData = this.web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256', 'uint256'],
+      [joinKind, this.web3.utils.toWei(amountBPT), tokenIndex]
+    )
+
+    const joinPoolRequest = {
+      assets: tokens,
+      maxAmountsIn: amountsInWei,
+      userData: userData,
       fromInternalBalance: false
     }
 
@@ -424,11 +553,12 @@ export class FactoryRouter {
         ['uint256', 'uint256'],
         [exitKind, this.web3.utils.toWei(btpIn)]
       )
-    } else if(exitKind == 2) {
+    } else if (exitKind == 2) {
       userData = this.web3.eth.abi.encodeParameters(
-        ['uint256', 'uint256[]','uint256'],
-        [exitKind, minAmountsOutInWei, this.web3.utils.toWei('1000')])
-    } 
+        ['uint256', 'uint256[]', 'uint256'],
+        [exitKind, minAmountsOutInWei, this.web3.utils.toWei('1000')]
+      )
+    }
 
     const exitPoolRequest = {
       assets: tokens,
