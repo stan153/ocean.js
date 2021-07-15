@@ -122,16 +122,8 @@ describe('Factory Router', () => {
   it('#joinPoolV2 - should add INITIAL liquidity', async () => {
     const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
 
-    await router.approveVault(
-      contractDeployer,
-      contracts.mockOceanAddress,
-      '10000000'
-    )
-    await router.approveVault(
-      contractDeployer,
-      contracts.mockDT20Address,
-      '10000000'
-    )
+    await router.approveVault(contractDeployer, contracts.mockOceanAddress, '10000000')
+    await router.approveVault(contractDeployer, contracts.mockDT20Address, '10000000')
 
     const initialBalances = ['50', '100']
 
@@ -142,7 +134,7 @@ describe('Factory Router', () => {
       initialBalances,
       0
     )
-    assert(txReceipt != null,'JoinPool tx failed')
+    assert(txReceipt != null, 'JoinPool tx failed')
     const event = txReceipt.events.PoolBalanceChanged
 
     assert(event.returnValues.liquidityProvider == contractDeployer)
@@ -169,6 +161,80 @@ describe('Factory Router', () => {
 
     assert(event.returnValues.deltas[1] == web3.utils.toWei(newBalances[1]))
     console.log(await router.getLPBalance(contractDeployer, poolAddress))
+  })
+
+  //   enum JoinKind {
+  //     INIT,
+  //     EXACT_TOKENS_IN_FOR_BPT_OUT,
+  //     TOKEN_IN_FOR_EXACT_BPT_OUT
+  // }
+  // enum ExitKind {
+  //     EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+  //     EXACT_BPT_IN_FOR_TOKENS_OUT,
+  //     BPT_IN_FOR_EXACT_TOKENS_OUT,
+  //     OPF_FEE_WITHDRAWAL,
+  //     MP_FEE_WITHDRAWAL
+  // }
+
+  it('#joinPoolV2 - should add EXTRA liquidity with joinKind = 2', async () => {
+    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+    const newBalances = ['2', '2']
+    const txReceipt = await router.joinPoolV2(
+      contractDeployer,
+      poolAddress,
+      tokens,
+      newBalances,
+      1
+    )
+    console.log(txReceipt)
+    // const event = txReceipt.events.PoolBalanceChanged
+
+    // assert(event.returnValues.deltas[0] == web3.utils.toWei(newBalances[0]))
+
+    // assert(event.returnValues.deltas[1] == web3.utils.toWei(newBalances[1]))
+    // console.log(await router.getLPBalance(contractDeployer, poolAddress))
+  })
+
+  it('#exitPoolV2 - should remove SOME liquidity', async () => {
+    await router.approveVault(contractDeployer, poolAddress, '10000000')
+
+    console.log(await router.getLPBalance(contractDeployer, poolAddress))
+    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+    const minBalances = ['0.001', '0.001']
+    const txReceipt = await router.exitPoolV2(
+      contractDeployer,
+      poolAddress,
+      tokens,
+      minBalances,
+      1,
+      '1'
+    )
+    console.log(txReceipt)
+    console.log(await router.getLPBalance(contractDeployer, poolAddress))
+    const event = txReceipt.events.PoolBalanceChanged
+    console.log(event)
+    
+  })
+
+  it('#exitPoolV2 - should remove SOME liquidity with exitKind = 2', async () => {
+    await router.approveVault(contractDeployer, poolAddress, '10000000')
+
+    console.log(await router.getLPBalance(contractDeployer, poolAddress))
+    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+    const minBalances = ['0.001', '0.001']
+    const txReceipt = await router.exitPoolV2(
+      contractDeployer,
+      poolAddress,
+      tokens,
+      minBalances,
+      2,
+      '1'
+    )
+    console.log(txReceipt)
+    console.log(await router.getLPBalance(contractDeployer, poolAddress))
+    const event = txReceipt.events.PoolBalanceChanged
+    console.log(event)
+    
   })
 
   it('#deployPool - should deploy a new pool with 3 tokens on BAL V2', async () => {

@@ -294,11 +294,13 @@ export class FactoryRouter {
     }
 
     try {
-      result = await token.methods.approve(this.vaultAddress, this.web3.utils.toWei(amount)).send({
-        from: account,
-        gas: estGas + 1
-        //  gasPrice: await getFairGasPrice(this.web3)
-      })
+      result = await token.methods
+        .approve(this.vaultAddress, this.web3.utils.toWei(amount))
+        .send({
+          from: account,
+          gas: estGas + 1
+          //  gasPrice: await getFairGasPrice(this.web3)
+        })
     } catch (e) {
       this.logger.error(`ERRPR: Failed to approve spender to spend tokens : ${e.message}`)
     }
@@ -313,7 +315,7 @@ export class FactoryRouter {
    */
   public async allowanceVault(
     tokenAdress: string,
-    owner: string,
+    owner: string
     //spender: string
   ): Promise<string> {
     const erc20 = new this.web3.eth.Contract(this.erc20ABI, tokenAdress)
@@ -321,7 +323,7 @@ export class FactoryRouter {
     return this.web3.utils.fromWei(trxReceipt)
   }
   /**
-   * Add initial liquidity on BALANCER V2
+   * Add liquidity on BALANCER V2
    * @param account user which triggers transaction
    * @param poolId pool name
    * @param sender user who sends the tokens, if != account must authorize account
@@ -380,6 +382,78 @@ export class FactoryRouter {
     try {
       trxReceipt = await this.vault.methods
         .joinPool(poolId, account, account, joinPoolRequest)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Remove liquidity on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param sender user who sends the tokens, if != account must authorize account
+   * @param recipient receiver of LP tokens
+   * @return txId
+   */
+  public async exitPoolV2(
+    account: string,
+    poolAddress: string,
+    // sender: string,
+    // recipient: string,
+    tokens: string[],
+    minAmountsOut: string[],
+    exitKind: number,
+    btpIn?: string
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    // 1 DT = 10 Ocean
+    let minAmountsOutInWei = []
+    for (let i = 0; i < minAmountsOut.length; i++) {
+      minAmountsOutInWei.push(this.web3.utils.toWei(minAmountsOut[i]))
+    }
+    let userData = null
+    if (exitKind == 1) {
+      // Construct magic userData
+      userData = this.web3.eth.abi.encodeParameters(
+        ['uint256', 'uint256'],
+        [exitKind, this.web3.utils.toWei(btpIn)]
+      )
+    } else if(exitKind == 2) {
+      userData = this.web3.eth.abi.encodeParameters(
+        ['uint256', 'uint256[]','uint256'],
+        [exitKind, minAmountsOutInWei, this.web3.utils.toWei('1000')])
+    } 
+
+    const exitPoolRequest = {
+      assets: tokens,
+      minAmountsOut: minAmountsOutInWei,
+      userData: userData,
+      fromInternalBalance: false
+    }
+
+    let trxReceipt = null
+    const poolId = await this.getPoolId(poolAddress)
+    console.log(poolId)
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .exitPool(poolId, account, account, exitPoolRequest)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .exitPool(poolId, account, account, exitPoolRequest)
         .send({ from: account, gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
