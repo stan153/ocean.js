@@ -130,7 +130,7 @@ describe('Factory Router', () => {
     const txReceipt = await router.initialJoinPoolV2(
       contractDeployer,
       poolAddress,
-      tokens,
+      //tokens,
       initialBalances
     )
     assert(txReceipt != null, 'JoinPool tx failed')
@@ -149,7 +149,7 @@ describe('Factory Router', () => {
     const txReceipt = await router.joinPoolV2(
       contractDeployer,
       poolAddress,
-      tokens,
+     // tokens,
       newBalances,
       '0.01'
     )
@@ -176,20 +176,21 @@ describe('Factory Router', () => {
   // }
 
   it('#singleJoinPoolV2 - should add EXTRA liquidity only with 1 token', async () => {
-    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+   // const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const newBalances = ['30', '0']
+    const tokens = await router.getPoolTokens(poolAddress)
     const token1Bal = await router.getLPBalance(
       contractDeployer,
-      contracts.mockDT20Address
+      tokens[1]
     )
     const token0Bal = await router.getLPBalance(
       contractDeployer,
-      contracts.mockOceanAddress
+      tokens[0]
     )
     const txReceipt = await router.singleJoinPoolV2(
       contractDeployer,
       poolAddress,
-      tokens,
+     // tokens,
       newBalances,
       '1',
       0
@@ -198,10 +199,10 @@ describe('Factory Router', () => {
     // const event = txReceipt.events.PoolBalanceChanged
     //   console.log(event)
     console.log(token0Bal)
-    console.log(await router.getLPBalance(contractDeployer, contracts.mockOceanAddress))
+    console.log(await router.getLPBalance(contractDeployer, tokens[0]))
     assert(
       token1Bal ==
-        (await router.getLPBalance(contractDeployer, contracts.mockDT20Address))
+        (await router.getLPBalance(contractDeployer, tokens[1]))
     )
   })
 
@@ -209,12 +210,12 @@ describe('Factory Router', () => {
     await router.approveVault(contractDeployer, poolAddress, '10000000')
 
     console.log(await router.getLPBalance(contractDeployer, poolAddress))
-    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+    //const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const minBalances = ['0.001', '0.001']
     const txReceipt = await router.exitPoolV2(
       contractDeployer,
       poolAddress,
-      tokens,
+   //   tokens,
       minBalances,
       1,
       '1'
@@ -229,12 +230,12 @@ describe('Factory Router', () => {
     await router.approveVault(contractDeployer, poolAddress, '10000000')
 
     console.log(await router.getLPBalance(contractDeployer, poolAddress))
-    const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
+    //const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const minBalances = ['0.001', '0.001']
     const txReceipt = await router.exitPoolV2(
       contractDeployer,
       poolAddress,
-      tokens,
+      //tokens,
       minBalances,
       2,
       '1'

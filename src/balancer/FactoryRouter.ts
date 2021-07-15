@@ -223,6 +223,16 @@ export class FactoryRouter {
     return trxReceipt
   }
 
+  /** Get Pool Tokens
+   * @return {Promise<string[]>} poolTokens array
+   */
+  public async getPoolTokens(poolAddress: string): Promise<string[]> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const poolId = await pool.methods.getPoolId().call()
+    const trxReceipt = await this.vault.methods.getPoolTokens(poolId).call()
+    return trxReceipt.tokens
+  }
+
   /** Get LP Balance
    * @return {Promise<string>} LP balance
    */
@@ -325,9 +335,8 @@ export class FactoryRouter {
   /**
    * Add INITIAL liquidity on BALANCER V2
    * @param account user which triggers transaction
-   * @param poolId pool name
-   * @param sender user who sends the tokens, if != account must authorize account
-   * @param recipient receiver of LP tokens
+   * @param poolAddress pool address
+   * @param amountsIn token amounts to provide
    * @return txId
    */
   public async initialJoinPoolV2(
@@ -335,8 +344,8 @@ export class FactoryRouter {
     poolAddress: string,
     // sender: string,
     // recipient: string,
-    tokens: string[],
-    amountsIn?: string[]
+    //tokens: string[],
+    amountsIn: string[]
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
@@ -355,7 +364,7 @@ export class FactoryRouter {
       ['uint256', 'uint256[]'],
       [joinKind, amountsInWei]
     )
-
+    const tokens = await this.getPoolTokens(poolAddress)
     const joinPoolRequest = {
       assets: tokens,
       maxAmountsIn: amountsInWei,
@@ -390,9 +399,9 @@ export class FactoryRouter {
   /**
    * Add general liquidity on BALANCER V2
    * @param account user which triggers transaction
-   * @param poolId pool name
-   * @param sender user who sends the tokens, if != account must authorize account
-   * @param recipient receiver of LP tokens
+   * @param poolAddress pool address
+   * @param amountsIn token amounts to provide
+   * @param minAmountBPT min LP token to receive back
    * @return txId
    */
   public async joinPoolV2(
@@ -400,9 +409,9 @@ export class FactoryRouter {
     poolAddress: string,
     // sender: string,
     // recipient: string,
-    tokens: string[],
+    //tokens: string[],
     amountsIn: string[],
-    amountBPT: string
+    minAmountBPT: string
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
@@ -418,8 +427,10 @@ export class FactoryRouter {
     const joinKind = 1
     const userData = this.web3.eth.abi.encodeParameters(
       ['uint256', 'uint256[]', 'uint256'],
-      [joinKind, amountsInWei, this.web3.utils.toWei(amountBPT)]
+      [joinKind, amountsInWei, this.web3.utils.toWei(minAmountBPT)]
     )
+
+    const tokens = await this.getPoolTokens(poolAddress)
 
     const joinPoolRequest = {
       assets: tokens,
@@ -430,7 +441,7 @@ export class FactoryRouter {
 
     let trxReceipt = null
     const poolId = await this.getPoolId(poolAddress)
-    console.log(poolId)
+    //console.log(poolId)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -455,9 +466,10 @@ export class FactoryRouter {
   /**
    * Add single token liquidity on BALANCER V2
    * @param account user which triggers transaction
-   * @param poolId pool name
-   * @param sender user who sends the tokens, if != account must authorize account
-   * @param recipient receiver of LP tokens
+   * @param poolAddress pool address
+   * @param amountsIn array of amounts In.
+   * @param minAmountBPT minimum amount of LP token to receive back
+   * @param tokenIndex token index we want to add liquidity
    * @return txId
    */
   public async singleJoinPoolV2(
@@ -465,9 +477,9 @@ export class FactoryRouter {
     poolAddress: string,
     // sender: string,
     // recipient: string,
-    tokens: string[],
-    maxAmountsIn: string[],
-    amountBPT: string,
+    // tokens: string[],
+    amountsIn: string[],
+    minAmountBPT: string,
     tokenIndex: number
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
@@ -476,17 +488,17 @@ export class FactoryRouter {
     }
 
     let amountsInWei = []
-    const joinKind = 2
-    
-    for (let i = 0; i < maxAmountsIn.length; i++) {
-      amountsInWei.push(this.web3.utils.toWei(maxAmountsIn[i]))
+
+    for (let i = 0; i < amountsIn.length; i++) {
+      amountsInWei.push(this.web3.utils.toWei(amountsIn[i]))
     }
 
+    const joinKind = 2
     const userData = this.web3.eth.abi.encodeParameters(
       ['uint256', 'uint256', 'uint256'],
-      [joinKind, this.web3.utils.toWei(amountBPT), tokenIndex]
+      [joinKind, this.web3.utils.toWei(minAmountBPT), tokenIndex]
     )
-
+    const tokens = await this.getPoolTokens(poolAddress)
     const joinPoolRequest = {
       assets: tokens,
       maxAmountsIn: amountsInWei,
@@ -531,7 +543,7 @@ export class FactoryRouter {
     poolAddress: string,
     // sender: string,
     // recipient: string,
-    tokens: string[],
+    //tokens: string[],
     minAmountsOut: string[],
     exitKind: number,
     btpIn?: string
@@ -559,7 +571,7 @@ export class FactoryRouter {
         [exitKind, minAmountsOutInWei, this.web3.utils.toWei('1000')]
       )
     }
-
+    const tokens = await this.getPoolTokens(poolAddress)
     const exitPoolRequest = {
       assets: tokens,
       minAmountsOut: minAmountsOutInWei,
