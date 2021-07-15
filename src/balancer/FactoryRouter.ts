@@ -3,7 +3,7 @@ import { AbiItem } from 'web3-utils/types'
 import { Logger } from '../utils'
 import defaultRouterABI from '@oceanprotocol/contracts/artifacts/contracts/pools/factories/OceanPoolFactoryRouter.sol/OceanPoolFactoryRouter.json'
 import defaultVaultABI from '@oceanprotocol/contracts/artifacts/contracts/interfaces/IVault.sol/IVault.json'
-import defaultPoolABI from '@oceanprotocol/contracts/artifacts/contracts/interfaces/IPool.sol/IPool.json'
+import defaultPoolABI from '@oceanprotocol/contracts/artifacts/contracts/pools/WeightedPool.sol/WeightedPool.json'
 import defaultERC20ABI from '@oceanprotocol/contracts/artifacts/contracts/interfaces/IERC20.sol/IERC20.json'
 import { TransactionReceipt } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
@@ -508,7 +508,7 @@ export class FactoryRouter {
 
     let trxReceipt = null
     const poolId = await this.getPoolId(poolAddress)
-    console.log(poolId)
+    // console.log(poolId)
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -531,50 +531,110 @@ export class FactoryRouter {
   }
 
   /**
-   * Remove liquidity on BALANCER V2
+   * Remove liquidity with Exact Amount IN on BALANCER V2
    * @param account user which triggers transaction
    * @param poolId pool name
-   * @param sender user who sends the tokens, if != account must authorize account
-   * @param recipient receiver of LP tokens
+   * @param minAmountsOut min token amounts to receive back for fixed btpIn
+   * @param btpIn LP token to redeem
    * @return txId
    */
-  public async exitPoolV2(
+  public async exitPoolExactInV2(
     account: string,
     poolAddress: string,
     // sender: string,
     // recipient: string,
     //tokens: string[],
     minAmountsOut: string[],
-    exitKind: number,
-    btpIn?: string
+    // exitKind: number,
+    btpIn: string
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
       return null
     }
 
-    // 1 DT = 10 Ocean
     let minAmountsOutInWei = []
     for (let i = 0; i < minAmountsOut.length; i++) {
       minAmountsOutInWei.push(this.web3.utils.toWei(minAmountsOut[i]))
     }
     let userData = null
-    if (exitKind == 1) {
-      // Construct magic userData
-      userData = this.web3.eth.abi.encodeParameters(
-        ['uint256', 'uint256'],
-        [exitKind, this.web3.utils.toWei(btpIn)]
-      )
-    } else if (exitKind == 2) {
-      userData = this.web3.eth.abi.encodeParameters(
-        ['uint256', 'uint256[]', 'uint256'],
-        [exitKind, minAmountsOutInWei, this.web3.utils.toWei('1000')]
-      )
-    }
+    const exitKind = 1
+    // Construct magic userData
+    userData = this.web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256'],
+      [exitKind, this.web3.utils.toWei(btpIn)]
+    )
+
     const tokens = await this.getPoolTokens(poolAddress)
     const exitPoolRequest = {
       assets: tokens,
       minAmountsOut: minAmountsOutInWei,
+      userData: userData,
+      fromInternalBalance: false
+    }
+
+    let trxReceipt = null
+    const poolId = await this.getPoolId(poolAddress)
+    // console.log(poolId)
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .exitPool(poolId, account, account, exitPoolRequest)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .exitPool(poolId, account, account, exitPoolRequest)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Remove liquidity with Exact Amount OUT on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param amountsOut token amounts to receive
+   * @param maxBtpIn max LP token amount to provide
+   * @return txId
+   */
+  public async exitPoolExactOutV2(
+    account: string,
+    poolAddress: string,
+    // sender: string,
+    // recipient: string,
+    //tokens: string[],
+    amountsOut: string[],
+    // exitKind: number,
+    maxBtpIn: string
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    let amountsOutInWei = []
+    for (let i = 0; i < amountsOut.length; i++) {
+      amountsOutInWei.push(this.web3.utils.toWei(amountsOut[i]))
+    }
+
+    const exitKind = 2
+    const userData = this.web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256[]', 'uint256'],
+      [exitKind, amountsOutInWei, this.web3.utils.toWei(maxBtpIn)]
+    )
+
+    const tokens = await this.getPoolTokens(poolAddress)
+    const exitPoolRequest = {
+      assets: tokens,
+      minAmountsOut: amountsOutInWei,
       userData: userData,
       fromInternalBalance: false
     }
@@ -599,6 +659,102 @@ export class FactoryRouter {
         .send({ from: account, gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Remove liquidity with Exact Amount OUT on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param marketplaceFeeCollector marketplace fee collector
+   * @return txId
+   */
+   public async collectMarketplaceFee(
+    account: string,
+    poolAddress: string,
+    marketplaceFeeCollector: string
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    const minAmountsOut = [0,0]
+    const exitKind = 4
+    const userData = this.web3.eth.abi.encodeParameters(
+      ['uint256'],
+      [exitKind]
+    )
+
+    const tokens = await this.getPoolTokens(poolAddress)
+    const exitPoolRequest = {
+      assets: tokens,
+      minAmountsOut: minAmountsOut,
+      userData: userData,
+      fromInternalBalance: false
+    }
+
+    let trxReceipt = null
+    const poolId = await this.getPoolId(poolAddress)
+    console.log(poolId)
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .exitPool(poolId, account, marketplaceFeeCollector, exitPoolRequest)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .exitPool(poolId, account, marketplaceFeeCollector, exitPoolRequest)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Remove liquidity with Exact Amount OUT on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolAddress pool name
+   * @param marketplaceFeeCollector marketplace fee collector
+   * @return txId
+   */
+   public async setMarketFeeCollector(
+    account: string,
+    poolAddress: string,
+    marketplaceFeeCollector: string
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    
+    let trxReceipt = null
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await pool.methods
+        .updateMarketCollector(marketplaceFeeCollector)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas setMarketFeeCollector')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await pool.methods
+        .updateMarketCollector(marketplaceFeeCollector)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to set Market Fee Collector: ${e.message}`)
     }
     return trxReceipt
   }

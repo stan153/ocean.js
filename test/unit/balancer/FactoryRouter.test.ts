@@ -206,18 +206,17 @@ describe('Factory Router', () => {
     )
   })
 
-  it('#exitPoolV2 - should remove SOME liquidity', async () => {
+  it('#exitPoolV2 - should remove SOME liquidity with EXACT BPT IN', async () => {
     await router.approveVault(contractDeployer, poolAddress, '10000000')
 
     console.log(await router.getLPBalance(contractDeployer, poolAddress))
     //const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const minBalances = ['0.001', '0.001']
-    const txReceipt = await router.exitPoolV2(
+    const txReceipt = await router.exitPoolExactInV2(
       contractDeployer,
       poolAddress,
    //   tokens,
       minBalances,
-      1,
       '1'
     )
     assert(txReceipt != null)
@@ -226,24 +225,37 @@ describe('Factory Router', () => {
     //console.log(event)
   })
 
-  it('#exitPoolV2 - should remove SOME liquidity with exitKind = 2', async () => {
+  it('#exitPoolV2 - should remove SOME liquidity with Exact Amount OUT', async () => {
     await router.approveVault(contractDeployer, poolAddress, '10000000')
 
     console.log(await router.getLPBalance(contractDeployer, poolAddress))
     //const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const minBalances = ['0.001', '0.001']
-    const txReceipt = await router.exitPoolV2(
+    const txReceipt = await router.exitPoolExactOutV2(
       contractDeployer,
       poolAddress,
       //tokens,
       minBalances,
-      2,
       '1'
     )
     assert(txReceipt != null)
     console.log(await router.getLPBalance(contractDeployer, poolAddress))
     const event = txReceipt.events.PoolBalanceChanged
     // console.log(event)
+  })
+
+  it('#collectMarketplaceFee - should succeed to call if recipient is marketFeeCollector', async () => {
+    const test = await router.setMarketFeeCollector(contractDeployer,poolAddress,user2)
+    assert(test != null)
+    console.log(await router.getLPBalance(contractDeployer, poolAddress))
+   
+    const txReceipt = await router.collectMarketplaceFee(
+      contractDeployer,
+      poolAddress,
+      user2
+    )
+    assert(txReceipt != null)
+
   })
 
   it('#deployPool - should deploy a new pool with 3 tokens on BAL V2', async () => {
