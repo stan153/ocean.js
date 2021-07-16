@@ -250,6 +250,32 @@ describe('OceanPoolV4', () => {
 
   })
 
+  it('#collectOceanCommunityFee - should succeed to call if recipient is OPFFeeCollector', async () => {
+   
+    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+   const OPFFeeCollector = '0xeE9300b7961e0a01d9f0adb863C7A227A07AaD75'
+    const txReceipt = await oceanPool.collectOceanCommunityFee(
+      contractDeployer,
+      poolAddress,
+      OPFFeeCollector
+    )
+    assert(txReceipt != null)
+
+  })
+
+  it('#collectOceanCommunityFee - should FAIL to call if recipient is NOT OPFFeeCollector', async () => {
+   
+    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+   const OPFFeeCollector = user2
+    const txReceipt = await oceanPool.collectOceanCommunityFee(
+      contractDeployer,
+      poolAddress,
+      OPFFeeCollector
+    )
+    assert(txReceipt == null)
+
+  })
+
   it('#deployPool - should deploy a new pool with 3 tokens on BAL V2', async () => {
     const tokens = [
       contracts.mockOceanAddress,

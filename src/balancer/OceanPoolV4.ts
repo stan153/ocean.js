@@ -178,11 +178,11 @@ export class OceanPoolV4 extends FactoryRouter {
         owner
       )
       if (!createTxid) {
-        this.logger.error('ERROR: Failed to call create pool')
-        throw new Error('ERROR: Failed to call create pool')
+        this.logger.error('ERROR: Failed to call deployAndJoin pool')
+        throw new Error('ERROR: Failed to call deployAndJoin pool')
       }
       const poolAddress = createTxid.events.NewPool.returnValues[0]
-      console.log(poolAddress)
+     
       let txid
       for (let i = 0; i < tokens.length; i++) {
        
@@ -305,6 +305,8 @@ export class OceanPoolV4 extends FactoryRouter {
         .approve(this.vaultAddress, this.web3.utils.toWei(amount))
         .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
+      this.logger.log('Error estimate gas approveVault()')
+      this.logger.log(e)
       estGas = gasLimitDefault
     }
 
@@ -317,7 +319,8 @@ export class OceanPoolV4 extends FactoryRouter {
           //  gasPrice: await getFairGasPrice(this.web3)
         })
     } catch (e) {
-      this.logger.error(`ERRPR: Failed to approve spender to spend tokens : ${e.message}`)
+      this.logger.error(`ERROR: Failed to approve spender to spend tokens : ${e.message}`)
+      throw new Error(`ERROR: Failed to approve spender to spend tokens : ${e.message}`)
     }
     return result
   }
@@ -355,6 +358,7 @@ export class OceanPoolV4 extends FactoryRouter {
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
+      throw new Error('ERROR: Web3 object is null')
       return null
     }
 
@@ -398,6 +402,7 @@ export class OceanPoolV4 extends FactoryRouter {
         .send({ from: account, gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+      throw new Error(`ERROR: Failed to join a pool: ${e.message}`)
     }
     return trxReceipt
   }
@@ -421,7 +426,8 @@ export class OceanPoolV4 extends FactoryRouter {
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
-      return null
+      throw new Error('ERROR: Web3 object is null')
+      //return null
     }
 
     let amountsInWei = []
@@ -455,7 +461,7 @@ export class OceanPoolV4 extends FactoryRouter {
         .joinPool(poolId, account, account, joinPoolRequest)
         .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
     } catch (e) {
-      this.logger.log('Error estimate gas deployPool')
+      this.logger.log('Error estimate gas joinPoolV2')
       this.logger.log(e)
       estGas = gasLimitDefault
     }
@@ -465,6 +471,7 @@ export class OceanPoolV4 extends FactoryRouter {
         .send({ from: account, gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+      throw new Error(`ERROR: Failed to join a pool: ${e.message}`)
     }
     return trxReceipt
   }
@@ -490,7 +497,8 @@ export class OceanPoolV4 extends FactoryRouter {
   ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
-      return null
+      throw new Error('ERROR: Web3 object is null')
+      //return null
     }
 
     let amountsInWei = []
@@ -532,6 +540,7 @@ export class OceanPoolV4 extends FactoryRouter {
         .send({ from: account, gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+      throw new Error(`ERROR: Failed to join a pool: ${e.message}`)
     }
     return trxReceipt
   }
@@ -715,6 +724,59 @@ export class OceanPoolV4 extends FactoryRouter {
     try {
       trxReceipt = await this.vault.methods
         .exitPool(poolId, account, marketplaceFeeCollector, exitPoolRequest)
+        .send({ from: account, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Remove liquidity with Exact Amount OUT on BALANCER V2
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param marketplaceFeeCollector marketplace fee collector
+   * @return txId
+   */
+   public async collectOceanCommunityFee(
+    account: string,
+    poolAddress: string,
+    OPFFeeCollector: string
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    const minAmountsOut = [0, 0]
+    const exitKind = 3
+    const userData = this.web3.eth.abi.encodeParameters(['uint256'], [exitKind])
+
+    const tokens = await this.getPoolTokens(poolAddress)
+    const exitPoolRequest = {
+      assets: tokens,
+      minAmountsOut: minAmountsOut,
+      userData: userData,
+      fromInternalBalance: false
+    }
+
+    let trxReceipt = null
+    const poolId = await this.getPoolId(poolAddress)
+    console.log(poolId)
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .exitPool(poolId, account, OPFFeeCollector, exitPoolRequest)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .exitPool(poolId, account, OPFFeeCollector, exitPoolRequest)
         .send({ from: account, gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to join a pool: ${e.message}`)

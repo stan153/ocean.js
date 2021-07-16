@@ -27,11 +27,7 @@ describe('Factory Router', () => {
   let receipt: TransactionReceipt
  
 
- 
-  const vaultAddress = '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
-  // setNewData() arguments
-
-  // TODO: complete unit test
+  
   it('should deploy contracts', async () => {
     contracts = new TestRouterHandler(
       ForkTemplate.abi as AbiItem[],
