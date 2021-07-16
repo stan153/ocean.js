@@ -49,9 +49,8 @@ export interface PoolTransaction {
 
 export enum PoolCreateProgressStep {
   CreatingPool,
-  ApprovingDatatoken,
-  ApprovingOcean,
-  SetupPool
+  ApprovingTokens,
+  AddInitialLiquidity
 }
 
 /**
@@ -71,10 +70,7 @@ export class OceanPoolV4 extends FactoryRouter {
     logger: Logger,
     vaultAddress: string,
     routerAddress: string,
-    factoryABI: AbiItem | AbiItem[] = null,
-    poolABI: AbiItem | AbiItem[] = null,
-    factoryAddress: string = null,
-    oceanAddress: string = null,
+    //oceanAddress: string = null,
     startBlock?: number
   ) {
     super(web3, logger, routerAddress)
@@ -85,9 +81,9 @@ export class OceanPoolV4 extends FactoryRouter {
     this.erc20ABI = defaultERC20ABI.abi as AbiItem[]
     this.vault = new this.web3.eth.Contract(this.vaultABI, this.vaultAddress)
 
-    if (oceanAddress) {
-      this.oceanAddress = oceanAddress
-    }
+    // if (oceanAddress) {
+    //   this.oceanAddress = oceanAddress
+    // }
     if (startBlock) this.startBlock = startBlock
     else this.startBlock = 0
   }
@@ -101,7 +97,7 @@ export class OceanPoolV4 extends FactoryRouter {
    * @param weights array of token weights (same order as tokens array)
    * @param swapFeePercentage swapFee for Liquidity Providers
    * @param swapMarketFee fee that goes to marketplace runner on each swap
-   * @return pool address
+   * @return TxId
    */
   public async deployPool(
     account: string,
@@ -112,7 +108,7 @@ export class OceanPoolV4 extends FactoryRouter {
     swapFeePercentage: number,
     swapMarketFee: number,
     owner: string
-  ): Promise<string> {
+  ): Promise<TransactionReceipt> {
     return await super.deployPool(
       account,
       name,
@@ -124,98 +120,104 @@ export class OceanPoolV4 extends FactoryRouter {
       owner
     )
   }
-  // /**
-  //    * Create DataToken pool
-  //    @param {String} account
-  //    * @param {String} dtAddress  DataToken address
-  //    * @param {String} dtAmount DataToken amount
-  //    * @param {String} dtWeight DataToken weight
-  //    * @param {String} oceanAmount Ocean amount
-  //    * @param {String} fee Swap fee. E.g. to get a 0.1% swapFee use `0.001`. The maximum allowed swapFee is `0.1` (10%).
-  //    * @return {String}
-  //    */
-  // public create(
-  //   account: string,
-  //   dtAddress: string,
-  //   dtAmount: string,
-  //   dtWeight: string,
-  //   oceanAmount: string,
-  //   fee: string
-  // ): SubscribablePromise<PoolCreateProgressStep, TransactionReceipt> {
-  //   if (this.oceanAddress == null) {
-  //     this.logger.error('ERROR: oceanAddress is not defined')
-  //     throw new Error('ERROR: oceanAddress is not defined')
-  //   }
-  //   if (parseFloat(fee) > 0.1) {
-  //     this.logger.error('ERROR: Swap fee too high. The maximum allowed swapFee is 10%')
-  //     throw new Error('ERROR: Swap fee too high. The maximum allowed swapFee is 10%')
-  //   }
-  //   if (parseFloat(dtAmount) < 2) {
-  //     this.logger.error('ERROR: Amount of DT is too low')
-  //     throw new Error('ERROR: Amount of DT is too low')
-  //   }
-  //   if (parseFloat(dtWeight) > 9 || parseFloat(dtWeight) < 1) {
-  //     this.logger.error('ERROR: Weight out of bounds (min 1, max9)')
-  //     throw new Error('ERROR: Weight out of bounds (min 1, max9)')
-  //   }
-  //   return new SubscribablePromise(async (observer) => {
-  //     observer.next(PoolCreateProgressStep.CreatingPool)
-  //     const createTxid = await super.createPool(account)
-  //     if (!createTxid) {
-  //       this.logger.error('ERROR: Failed to call create pool')
-  //       throw new Error('ERROR: Failed to call create pool')
-  //     }
-  //     const address = createTxid.events.BPoolRegistered.returnValues[0]
-  //     const oceanWeight = 10 - parseFloat(dtWeight)
-  //     this.dtAddress = dtAddress
-  //     let txid
-  //     const dtAllowance = await this.allowance(dtAddress, account, address)
-  //     if (new Decimal(dtAllowance).lt(dtAmount)) {
-  //       observer.next(PoolCreateProgressStep.ApprovingDatatoken)
-  //       txid = await this.approve(
-  //         account,
-  //         dtAddress,
-  //         address,
-  //         this.web3.utils.toWei(String(dtAmount))
-  //       )
-  //       if (!txid) {
-  //         this.logger.error('ERROR: Failed to call approve DT token')
-  //         throw new Error('ERROR: Failed to call approve DT token')
-  //       }
-  //     }
-  //     const oceanAllowance = await this.allowance(this.oceanAddress, account, address)
-  //     if (new Decimal(oceanAllowance).lt(oceanAmount)) {
-  //       observer.next(PoolCreateProgressStep.ApprovingOcean)
-  //       txid = await this.approve(
-  //         account,
-  //         this.oceanAddress,
-  //         address,
-  //         this.web3.utils.toWei(String(oceanAmount))
-  //       )
-  //       if (!txid) {
-  //         this.logger.error('ERROR: Failed to call approve OCEAN token')
-  //         throw new Error('ERROR: Failed to call approve OCEAN token')
-  //       }
-  //     }
-  //     observer.next(PoolCreateProgressStep.SetupPool)
-  //     txid = await super.setup(
-  //       account,
-  //       address,
-  //       dtAddress,
-  //       this.web3.utils.toWei(String(dtAmount)),
-  //       this.web3.utils.toWei(String(dtWeight)),
-  //       this.oceanAddress,
-  //       this.web3.utils.toWei(String(oceanAmount)),
-  //       this.web3.utils.toWei(String(oceanWeight)),
-  //       this.web3.utils.toWei(fee)
-  //     )
-  //     if (!txid) {
-  //       this.logger.error('ERROR: Failed to create a new pool')
-  //       throw new Error('ERROR: Failed to create a new pool')
-  //     }
-  //     return createTxid
-  //   })
-  // }
+
+
+  /**
+     * Create DataToken pool
+     @param {String} account
+     * @param {String} dtAddress  DataToken address
+     * @param {String} dtAmount DataToken amount
+     * @param {String} dtWeight DataToken weight
+     * @param {String} oceanAmount Ocean amount
+     * @param {String} fee Swap fee. E.g. to get a 0.1% swapFee use `0.001`. The maximum allowed swapFee is `0.1` (10%).
+     * @return {String}
+     */
+  public deployAndJoin(
+    account: string,
+    name: string,
+    symbol: string,
+    tokens: string[], // tokens must be sorted from smaller to bigger 
+    weights: string[], // IMPORTANT: weights MUST be in the same order of the tokens array. tokens[i] => weights[i]
+    swapFeePercentage: number,
+    swapMarketFee: number,
+    owner: string,
+    amountsIn: string[]
+  ): SubscribablePromise<PoolCreateProgressStep, TransactionReceipt> {
+    
+    if (tokens.length != weights.length || tokens.length != amountsIn.length) {
+      this.logger.error('ERROR: Wrong array format')
+      throw new Error('ERROR: Wrong array format')
+    }
+    
+    // if (this.oceanAddress == null) {
+    //   this.logger.error('ERROR: oceanAddress is not defined')
+    //   throw new Error('ERROR: oceanAddress is not defined')
+    // }
+    // if (parseFloat(fee) > 0.1) {
+    //   this.logger.error('ERROR: Swap fee too high. The maximum allowed swapFee is 10%')
+    //   throw new Error('ERROR: Swap fee too high. The maximum allowed swapFee is 10%')
+    // }
+    // if (parseFloat(dtAmount) < 2) {
+    //   this.logger.error('ERROR: Amount of DT is too low')
+    //   throw new Error('ERROR: Amount of DT is too low')
+    // }
+    // if (parseFloat(dtWeight) > 9 || parseFloat(dtWeight) < 1) {
+    //   this.logger.error('ERROR: Weight out of bounds (min 1, max9)')
+    //   throw new Error('ERROR: Weight out of bounds (min 1, max9)')
+    // }
+    return new SubscribablePromise(async (observer) => {
+      observer.next(PoolCreateProgressStep.CreatingPool)
+      const createTxid = await super.deployPool(
+        account,
+        name,
+        symbol,
+        tokens, // tokens must be sorted from smaller to bigger (using .sort() for example)
+        weights, // IMPORTANT: weights MUST be in the same order of the tokens array. tokens[i] => weights[i]
+        swapFeePercentage,
+        swapMarketFee,
+        owner
+      )
+      if (!createTxid) {
+        this.logger.error('ERROR: Failed to call create pool')
+        throw new Error('ERROR: Failed to call create pool')
+      }
+      const poolAddress = createTxid.events.NewPool.returnValues[0]
+      console.log(poolAddress)
+      let txid
+      for (let i = 0; i < tokens.length; i++) {
+       
+        let allowance = await this.allowanceVault(account,tokens[i])
+        if (new Decimal(allowance).lt(amountsIn[i])) {
+          observer.next(PoolCreateProgressStep.ApprovingTokens)
+          txid = await this.approveVault(
+            account,
+            tokens[i],
+            amountsIn[i]
+          ) 
+          
+          if (!txid) {
+            this.logger.error(`ERROR: Failed to call approve for token address ${tokens[i]}, tokenIndex:${i}`)
+            throw new Error(`ERROR: Failed to call approve for token address ${tokens[i]}, tokenIndex:${i}`)
+          }
+        }
+      }
+      
+     
+      observer.next(PoolCreateProgressStep.AddInitialLiquidity)
+      txid = await this.initialJoinPoolV2(
+        account,
+        poolAddress,
+        amountsIn
+      )
+      
+      if (!txid) {
+        this.logger.error(`ERROR: Failed to Add Liquidity on pool ${poolAddress}` )
+        throw new Error(`ERROR: Failed to Add Liquidity on pool ${poolAddress}`)
+      }
+      console.log(txid)
+      return txid
+    })
+  }
 
   /** Get Pool ID
    * @return {Promise<string>} pool ID
@@ -250,7 +252,7 @@ export class OceanPoolV4 extends FactoryRouter {
    * @param {String} account
    * @param {String} tokenAddress
    * @param {String} spender
-   * @param {String} amount  (always expressed as wei)
+   * @param {String} amount  
    * @param {String} force  if true, will overwrite any previous allowence. Else, will check if allowence is enough and will not send a transaction if it's not needed
    */
   async approveVault(
@@ -289,7 +291,7 @@ export class OceanPoolV4 extends FactoryRouter {
       from: account
     })
     if (!force) {
-      const currentAllowence = await this.allowanceVault(tokenAddress, account)
+      const currentAllowence = await this.allowanceVault(account,tokenAddress)
       if (new Decimal(currentAllowence).greaterThanOrEqualTo(amount)) {
         // we have enough
         return null
@@ -323,16 +325,17 @@ export class OceanPoolV4 extends FactoryRouter {
   /**
      * Get Alloance for both DataToken and Ocean
      * @param {String } tokenAdress
-     * @param {String} owner
+     * @param {String} account
     
      */
   public async allowanceVault(
-    tokenAdress: string,
-    owner: string
+    account: string,
+    tokenAddress: string,
+    
     //spender: string
   ): Promise<string> {
-    const erc20 = new this.web3.eth.Contract(this.erc20ABI, tokenAdress)
-    const trxReceipt = await erc20.methods.allowance(owner, this.vaultAddress).call()
+    const erc20 = new this.web3.eth.Contract(this.erc20ABI, tokenAddress)
+    const trxReceipt = await erc20.methods.allowance(account, this.vaultAddress).call()
     return this.web3.utils.fromWei(trxReceipt)
   }
   /**

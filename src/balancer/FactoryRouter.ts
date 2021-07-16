@@ -48,7 +48,7 @@ export class FactoryRouter {
    * @param weights array of token weights (same order as tokens array)
    * @param swapFeePercentage swapFee for Liquidity Providers
    * @param swapMarketFee fee that goes to marketplace runner on each swap
-   * @return pool address
+   * @return Trx Receipt
    */
   public async deployPool(
     account: string,
@@ -59,7 +59,7 @@ export class FactoryRouter {
     swapFeePercentage: number,
     swapMarketFee: number,
     owner: string
-  ): Promise<string> {
+  ): Promise<TransactionReceipt> {
     if (this.web3 === null) {
       this.logger.error('ERROR: Web3 object is null')
       return null
@@ -73,7 +73,7 @@ export class FactoryRouter {
     for (let i = 0; i < weights.length; i++) {
       weightsInWei.push(this.web3.utils.toWei(weights[i]))
     }
-    let poolAddress = null
+    let trxReceipt = null
     const gasLimitDefault = this.GASLIMIT_DEFAULT
     let estGas
     try {
@@ -94,7 +94,7 @@ export class FactoryRouter {
       estGas = gasLimitDefault
     }
     try {
-      const trxReceipt = await this.router.methods
+      trxReceipt = await this.router.methods
         .deployPool(
           name,
           symbol,
@@ -105,11 +105,11 @@ export class FactoryRouter {
           owner
         )
         .send({ from: account, gas: estGas + 1 })
-      poolAddress = trxReceipt.events.NewPool.returnValues[0]
+      //poolAddress = 
     } catch (e) {
       this.logger.error(`ERROR: Failed to create new pool: ${e.message}`)
     }
-    return poolAddress
+    return trxReceipt
   }
 
   /**
