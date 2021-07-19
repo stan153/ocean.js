@@ -141,7 +141,7 @@ export class OceanPoolV4 extends FactoryRouter {
     swapMarketFee: number,
     owner: string,
     amountsIn: string[]
-  ): SubscribablePromise<PoolCreateProgressStep, TransactionReceipt> {
+  ): SubscribablePromise<PoolCreateProgressStep, string> {
     if (tokens.length != weights.length || tokens.length != amountsIn.length) {
       this.logger.error('ERROR: Wrong array format')
       throw new Error('ERROR: Wrong array format')
@@ -206,8 +206,8 @@ export class OceanPoolV4 extends FactoryRouter {
         this.logger.error(`ERROR: Failed to Add Liquidity on pool ${poolAddress}`)
         throw new Error(`ERROR: Failed to Add Liquidity on pool ${poolAddress}`)
       }
-      console.log(txid)
-      return txid
+     // console.log(txid)
+      return poolAddress
     })
   }
 
@@ -829,8 +829,8 @@ export class OceanPoolV4 extends FactoryRouter {
   public async swapExactIn(
     account: string,
     poolAddress: string,
-    assetIn: string,
-    assetOut: string,
+    tokenIn: string,
+    tokenOut: string,
     amountIn: string,
     minOut: string
   ): Promise<TransactionReceipt> {
@@ -838,12 +838,12 @@ export class OceanPoolV4 extends FactoryRouter {
       this.logger.error('ERROR: Web3 object is null')
       return null
     }
-
+    
     const swapStruct = {
-      poolId: this.getPoolId(poolAddress),
+      poolId: await this.getPoolId(poolAddress) ,
       kind: 0,
-      assetIn: assetIn,
-      assetOut: assetOut,
+      assetIn: tokenIn,
+      assetOut: tokenOut,
       amount: this.web3.utils.toWei(amountIn),
       userData: '0x'
     }
@@ -858,6 +858,7 @@ export class OceanPoolV4 extends FactoryRouter {
 
     let trxReceipt = null 
     const gasLimitDefault = this.GASLIMIT_DEFAULT
+    
     let estGas
     try {
       estGas = await this.vault.methods
@@ -871,7 +872,7 @@ export class OceanPoolV4 extends FactoryRouter {
     try {
       trxReceipt = await this.vault.methods
         .swap(swapStruct, fundManagement, this.web3.utils.toWei(minOut), deadline)
-        .send({ from: account, gas: estGas + 1 })
+        .send({ from: account, value: 0,gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to swapExactIn: ${e.message}`)
       throw new Error(`ERROR: Failed to swapExactIn: ${e.message}`)
@@ -881,7 +882,7 @@ export class OceanPoolV4 extends FactoryRouter {
 
 
   /**
-   * Perform a swap with EXACT amount IN 
+   * Perform a swap with EXACT amount OUT
    * @param account user which triggers transaction
    * @param poolId pool name
    * @param assetIn token IN
@@ -893,8 +894,8 @@ export class OceanPoolV4 extends FactoryRouter {
    public async swapExactOut(
     account: string,
     poolAddress: string,
-    assetIn: string,
-    assetOut: string,
+    tokenIn: string,
+    tokenOut: string,
     amountOut: string,
     maxIn: string
   ): Promise<TransactionReceipt> {
@@ -904,12 +905,12 @@ export class OceanPoolV4 extends FactoryRouter {
     }
 
     const swapStruct = {
-      poolId: this.getPoolId(poolAddress),
+      poolId: await this.getPoolId(poolAddress),
       kind: 1,
-      assetIn: assetIn,
-      assetOut: assetOut,
+      assetIn: tokenIn,
+      assetOut: tokenOut,
       amount: this.web3.utils.toWei(amountOut),
-      userData: '0x'
+      userData: "0x"
     }
     const fundManagement = {
       sender: account,
@@ -935,10 +936,10 @@ export class OceanPoolV4 extends FactoryRouter {
     try {
       trxReceipt = await this.vault.methods
         .swap(swapStruct, fundManagement, this.web3.utils.toWei(maxIn), deadline)
-        .send({ from: account, gas: estGas + 1 })
+        .send({ from: account, value:0, gas: estGas + 1 })
     } catch (e) {
-      this.logger.error(`ERROR: Failed to swapExactIn: ${e.message}`)
-      throw new Error(`ERROR: Failed to swapExactIn: ${e.message}`)
+      this.logger.error(`ERROR: Failed to swapExactOut: ${e.message}`)
+      throw new Error(`ERROR: Failed to swapExactOut: ${e.message}`)
     }
     return trxReceipt
   }
