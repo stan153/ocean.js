@@ -221,7 +221,7 @@ export class OceanPoolV4 extends FactoryRouter {
   }
 
   /** Get Pool Tokens
-   * @return {Promise<string[]>} poolTokens array
+   * @return {Promise<string[]>} poolTokens addresses array
    */
   public async getPoolTokens(poolAddress: string): Promise<string[]> {
     const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
@@ -231,13 +231,98 @@ export class OceanPoolV4 extends FactoryRouter {
   }
 
   /** Get Pool Tokens Balances
-   * @return {Promise<string[]>} poolTokens array
+   * @return {Promise<string[]>} poolTokens balances array
    */
   public async getPoolBalances(poolAddress: string): Promise<string[]> {
     const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
     const poolId = await pool.methods.getPoolId().call()
     const trxReceipt = await this.vault.methods.getPoolTokens(poolId).call()
     return trxReceipt.balances
+  }
+
+  /** Get Swap Fee (that goes liquidity providers)
+   * @return {Promise<string>} Ocean Fee (Decimals) => 0.001 => 0.1%
+   */
+  public async getSwapFeePercentage(poolAddress: string): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.getSwapFeePercentage().call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+  
+  /** Get Ocean Fee on swap (for Ocean Community)
+   * @return {Promise<string>} Ocean Fee (Decimals) => 0.001 => 0.1%
+   */
+  public async getOceanFeePercentage(poolAddress: string): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.swapFeeOcean().call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+
+  /** Get Total Community Fees
+   * @return {Promise<string>} Total amount of fees that goes to Ocean Community, collected from a pool in a specific token
+   */
+  public async getTotalCommunityFees(
+    poolAddress: string,
+    tokenIndex: number
+  ): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.communityFees(tokenIndex).call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+
+  /** Get Already Collected Community Fees
+   * @return {Promise<string>} Amount of fees that were already withdrawn for the Ocean Community, collected from a pool in a specific token
+   */
+  public async getCollectedCommunityFees(
+    poolAddress: string,
+    tokenIndex: number
+  ): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.feesCollectedOPF(tokenIndex).call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+
+  /** Get Market Fee
+   * @return {Promise<string>} Market Fee (Decimals) => 0.001 => 0.1%
+   */
+  public async getMarketFeePercentage(poolAddress: string): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.swapFeeMarket().call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+
+  /** Get Total MarketFees
+   * @return {Promise<string>} Total amount of fees that goes to the marketplace, collected from a pool in a specific token
+   */
+  public async getTotalmarketFees(
+    poolAddress: string,
+    tokenIndex: number
+  ): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.marketFees(tokenIndex).call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+
+  /** Get Already Collected Market fees
+   * @return {Promise<string>}  Amount of fees that were already withdrawn from the marketplace, collected from a pool in a specific token
+   */
+  public async getCollectedMarktetFees(
+    poolAddress: string,
+    tokenIndex: number
+  ): Promise<string> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.feesCollectedMarket(tokenIndex).call()
+    return this.web3.utils.fromWei(trxReceipt)
+  }
+
+  /** Get appreciation of one BPT relative to the
+   * underlying tokens. This starts at 1 when the pool is created and grows over time
+   * @return {Promise<number>}
+   */
+  public async getRateBPT(poolAddress: string): Promise<number> {
+    const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
+    const trxReceipt = await pool.methods.getRate().call()
+    return trxReceipt
   }
 
   /** Get LP Balance
