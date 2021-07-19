@@ -943,4 +943,81 @@ export class OceanPoolV4 extends FactoryRouter {
     }
     return trxReceipt
   }
+
+
+   /**
+   * Perform any kind of swap on BalancerV2, fully customizable
+   * @param account user which triggers transaction
+   * @param poolId pool name
+   * @param kind  type of swap input: GIVEN IN or GIVEN OUT {0,1}
+   * @param tokenIn token IN
+   * @param tokenOut token OUT
+   * @param amount amount GIVEN IN or GIVEN OUT
+   * @param userData userData for extra operation
+   * @param sender user from which sending the token( if different from account, must have approved account as relayer)
+   * @param recipient user which is going to receive the tokens after the swap
+   * @param fromInternalBalance if we want to use internal balances instead of an external transferring
+   * @param toInternalBalance if we want to keep the tokens into internal balances and not transferring them externally
+   * @param limit minimum or max amount we would like to receive or provide
+   * @return txId
+   */
+    public async swapGeneric(
+      account: string,
+      poolAddress: string,
+      kind: number,
+      tokenIn: string,
+      tokenOut: string,
+      amount: string,
+      userData: string,
+      sender: string,
+      recipient: string,
+      fromInternalBalance: boolean,
+      toInternalBalance: boolean,
+      limit: string
+    ): Promise<TransactionReceipt> {
+      if (this.web3 === null) {
+        this.logger.error('ERROR: Web3 object is null')
+        return null
+      }
+      
+      const swapStruct = {
+        poolId: await this.getPoolId(poolAddress) ,
+        kind: kind,
+        assetIn: tokenIn,
+        assetOut: tokenOut,
+        amount: this.web3.utils.toWei(amount),
+        userData: userData
+      }
+      const fundManagement = {
+        sender: sender,
+        fromInternalBalance: fromInternalBalance,
+        recipient: recipient,
+        toInternalBalance: toInternalBalance
+      }
+  
+      const deadline = Math.round(new Date().getTime() / 1000 + 600000) // 10 minutes
+  
+      let trxReceipt = null 
+      const gasLimitDefault = this.GASLIMIT_DEFAULT
+      
+      let estGas
+      try {
+        estGas = await this.vault.methods
+          .swap(swapStruct, fundManagement, this.web3.utils.toWei(limit), deadline)
+          .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+      } catch (e) {
+        this.logger.log('Error estimate gas deployPool')
+        this.logger.log(e)
+        estGas = gasLimitDefault
+      }
+      try {
+        trxReceipt = await this.vault.methods
+          .swap(swapStruct, fundManagement, this.web3.utils.toWei(limit), deadline)
+          .send({ from: account, value: 0,gas: estGas + 1 })
+      } catch (e) {
+        this.logger.error(`ERROR: Failed to swapExactIn: ${e.message}`)
+        throw new Error(`ERROR: Failed to swapExactIn: ${e.message}`)
+      }
+      return trxReceipt
+    }
 }
