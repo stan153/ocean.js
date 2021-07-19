@@ -127,7 +127,7 @@ describe('OceanPoolV4', () => {
     assert(event.returnValues.poolId == (await oceanPool.getPoolId(poolAddress)))
     assert(event.returnValues.deltas[0] == web3.utils.toWei(initialBalances[0]))
     assert(event.returnValues.deltas[1] == web3.utils.toWei(initialBalances[1]))
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
   })
 
   it('#joinPoolV2 - should add EXTRA liquidity, 2 tokens liquidity addition', async () => {
@@ -145,7 +145,7 @@ describe('OceanPoolV4', () => {
     assert(event.returnValues.deltas[0] == web3.utils.toWei(newBalances[0]))
 
     assert(event.returnValues.deltas[1] == web3.utils.toWei(newBalances[1]))
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
   })
 
   //   enum JoinKind {
@@ -165,8 +165,8 @@ describe('OceanPoolV4', () => {
     // const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const newBalances = ['30', '0']
     const tokens = await oceanPool.getPoolTokens(poolAddress)
-    const token1Bal = await oceanPool.getLPBalance(contractDeployer, tokens[1])
-    const token0Bal = await oceanPool.getLPBalance(contractDeployer, tokens[0])
+    const token1Bal = await oceanPool.getTokenBalance(contractDeployer, tokens[1])
+    const token0Bal = await oceanPool.getTokenBalance(contractDeployer, tokens[0])
     const txReceipt = await oceanPool.singleJoinPoolV2(
       contractDeployer,
       poolAddress,
@@ -179,14 +179,14 @@ describe('OceanPoolV4', () => {
     // const event = txReceipt.events.PoolBalanceChanged
     //   console.log(event)
     console.log(token0Bal)
-    console.log(await oceanPool.getLPBalance(contractDeployer, tokens[0]))
-    assert(token1Bal == (await oceanPool.getLPBalance(contractDeployer, tokens[1])))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, tokens[0]))
+    assert(token1Bal == (await oceanPool.getTokenBalance(contractDeployer, tokens[1])))
   })
 
   it('#exitPoolV2 - should remove SOME liquidity with EXACT BPT IN', async () => {
     await oceanPool.approveVault(contractDeployer, poolAddress, '10000000')
 
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
     //const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const minBalances = ['0.001', '0.001']
     const txReceipt = await oceanPool.exitPoolExactInV2(
@@ -197,7 +197,7 @@ describe('OceanPoolV4', () => {
       '1'
     )
     assert(txReceipt != null)
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
     const event = txReceipt.events.PoolBalanceChanged
     //console.log(event)
   })
@@ -205,7 +205,7 @@ describe('OceanPoolV4', () => {
   it('#exitPoolV2 - should remove SOME liquidity with Exact Amount OUT', async () => {
     await oceanPool.approveVault(contractDeployer, poolAddress, '10000000')
 
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
     //const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
     const minBalances = ['0.001', '0.001']
     const txReceipt = await oceanPool.exitPoolExactOutV2(
@@ -216,7 +216,7 @@ describe('OceanPoolV4', () => {
       '1'
     )
     assert(txReceipt != null)
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
     const event = txReceipt.events.PoolBalanceChanged
     // console.log(event)
   })
@@ -228,7 +228,7 @@ describe('OceanPoolV4', () => {
       user2
     )
     assert(test != null)
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
 
     const txReceipt = await oceanPool.collectMarketplaceFee(
       contractDeployer,
@@ -239,7 +239,7 @@ describe('OceanPoolV4', () => {
   })
 
   it('#collectOceanCommunityFee - should succeed to call if recipient is OPFFeeCollector', async () => {
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
     const OPFFeeCollector = '0xeE9300b7961e0a01d9f0adb863C7A227A07AaD75'
     const txReceipt = await oceanPool.collectOceanCommunityFee(
       contractDeployer,
@@ -250,7 +250,7 @@ describe('OceanPoolV4', () => {
   })
 
   it('#collectOceanCommunityFee - should FAIL to call if recipient is NOT OPFFeeCollector', async () => {
-    console.log(await oceanPool.getLPBalance(contractDeployer, poolAddress))
+    console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
     const OPFFeeCollector = user2
     const txReceipt = await oceanPool.collectOceanCommunityFee(
       contractDeployer,
@@ -316,7 +316,7 @@ describe('OceanPoolV4', () => {
   })
 
   it('#swapExactIn - should swap from Ocean to Datatoken', async () => {
-    const oceanBalanceBeforeSwap = await oceanPool.getLPBalance(
+    const oceanBalanceBeforeSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockOceanAddress
     )
@@ -332,7 +332,7 @@ describe('OceanPoolV4', () => {
     )
     assert(receipt != null)
 
-    const oceanBalanceAfterSwap = await oceanPool.getLPBalance(
+    const oceanBalanceAfterSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockOceanAddress
     )
@@ -344,7 +344,7 @@ describe('OceanPoolV4', () => {
   })
 
   it('#swapExactIn - should swap from DT to Ocean', async () => {
-    const dtBalanceBeforeSwap = await oceanPool.getLPBalance(
+    const dtBalanceBeforeSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockDT20Address
     )
@@ -360,7 +360,7 @@ describe('OceanPoolV4', () => {
     )
     assert(receipt != null)
 
-    const dtBalanceAfterSwap = await oceanPool.getLPBalance(
+    const dtBalanceAfterSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockDT20Address
     )
@@ -372,7 +372,7 @@ describe('OceanPoolV4', () => {
   })
 
   it('#swapExactOut - should swap from Ocean to Datatoken', async () => {
-    const dtBalanceBeforeSwap = await oceanPool.getLPBalance(
+    const dtBalanceBeforeSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockDT20Address
     )
@@ -388,7 +388,7 @@ describe('OceanPoolV4', () => {
     )
     assert(receipt != null)
 
-    const dtBalanceAfterSwap = await oceanPool.getLPBalance(
+    const dtBalanceAfterSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockDT20Address
     )
@@ -400,7 +400,7 @@ describe('OceanPoolV4', () => {
   })
 
   it('#swapExactOut - should swap from DT to Ocean', async () => {
-    const oceanBalanceBeforeSwap = await oceanPool.getLPBalance(
+    const oceanBalanceBeforeSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockOceanAddress
     )
@@ -416,7 +416,7 @@ describe('OceanPoolV4', () => {
     )
     assert(receipt != null)
 
-    const oceanBalanceAfterSwap = await oceanPool.getLPBalance(
+    const oceanBalanceAfterSwap = await oceanPool.getTokenBalance(
       contractDeployer,
       contracts.mockOceanAddress
     )
