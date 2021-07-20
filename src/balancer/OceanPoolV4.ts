@@ -846,7 +846,7 @@ export class OceanPoolV4 extends FactoryRouter {
    * @param userData userData to select which type of joinPool we will perform
    * @param fromInternalBalance if we want to use internal balance and avoid external transfer
    * @param sender user which we take the tokens from. If different from account, account has to be approved as relayer
-   * @param recipient user which will receive BTP (LP tokens)
+   * @param recipient user which will receive the tokens we are removing from pool
    * @return txId
    */
   public async exitPoolV2Generic(

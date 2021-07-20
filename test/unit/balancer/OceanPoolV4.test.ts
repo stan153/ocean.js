@@ -187,7 +187,7 @@ describe('OceanPoolV4', () => {
     assert(token1Bal == (await oceanPool.getTokenBalance(contractDeployer, tokens[1])))
   })
 
-  it('#exitPoolV2 - should remove SOME liquidity with EXACT BPT IN', async () => {
+  it('#exitPoolV2ExactIn - should remove SOME liquidity with EXACT BPT IN', async () => {
     await oceanPool.approveVault(contractDeployer, poolAddress, '10000000')
 
     console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
@@ -206,7 +206,7 @@ describe('OceanPoolV4', () => {
     //console.log(event)
   })
 
-  it('#exitPoolV2 - should remove SOME liquidity with Exact Amount OUT', async () => {
+  it('#exitPoolV2ExactOut - should remove SOME liquidity with Exact Amount OUT', async () => {
     await oceanPool.approveVault(contractDeployer, poolAddress, '10000000')
 
     console.log(await oceanPool.getTokenBalance(contractDeployer, poolAddress))
@@ -587,5 +587,88 @@ describe('OceanPoolV4', () => {
     ])
 
     assert(dtInternal[0] == parseFloat(web3.utils.toWei(amountOut)))
+  })
+
+
+  it('#joinPoolV2Generic - should be able to add liquidity using generic function, BPT goes to user4, EXTERNAL BALANCE', async () => {
+    // we have already approved the vault for user: contractDeployer
+    const amountsIn = [web3.utils.toWei('30'), web3.utils.toWei('50')]
+    const joinKind = 1 // 2 token liquidity addition
+    const minAmountBPT = web3.utils.toWei('0.001')
+    const userData = web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256[]', 'uint256'],
+      [joinKind, amountsIn,minAmountBPT]
+    )
+
+    
+    const tokens = await oceanPool.getPoolTokens(poolAddress)
+    
+
+
+    // user4 has no BPT yet. He will received them after liquidity addition
+    assert((await oceanPool.getTokenBalance(user4, poolAddress)) == '0')
+
+
+    receipt = await oceanPool.joinPoolV2Generic(
+      contractDeployer,
+      poolAddress,
+      tokens,
+      amountsIn, 
+      userData,
+      false,
+      contractDeployer,
+      user4
+    )
+    assert(receipt != null)
+
+    // user4 has received tokens 
+    assert((await oceanPool.getTokenBalance(user4, poolAddress)) != '0')
+
+    
+  })
+
+  it('#exitPoolV2Generic - should be able to remove liquidity using generic function, tokens goes to user4, EXTERNAL BALANCE', async () => {
+    // we have already approved the vault for user: contractDeployer
+    const minAmountsOut = ['2', '2']
+    const exitKind = 1 // Exact BTP IN enum
+    const btpIn = '100' // LP tokens we would like to send
+    
+
+    const userData = web3.eth.abi.encodeParameters(
+      ['uint256', 'uint256'],
+      [exitKind, web3.utils.toWei(btpIn)]
+    )
+
+    
+    const tokens = await oceanPool.getPoolTokens(poolAddress)
+    
+
+
+    // user4 has no OCEAN token yet nor DT20 (he has some DT20 from previous steps but as internal balance on the vault).
+   assert(await oceanPool.getTokenBalance(user4, contracts.mockOceanAddress) == '0')
+   assert(await oceanPool.getTokenBalance(user4, contracts.mockDT20Address) == '0')
+   const btpBeforeEXIT = await oceanPool.getTokenBalance(contractDeployer, poolAddress)
+
+    receipt = await oceanPool.exitPoolV2Generic(
+      contractDeployer,
+      poolAddress,
+      tokens,
+      minAmountsOut, 
+      userData,
+      false,
+      contractDeployer,
+      user4
+    )
+    assert(receipt != null)
+    
+    
+    assert(await oceanPool.getTokenBalance(user4, contracts.mockOceanAddress) > '0')
+    assert(await oceanPool.getTokenBalance(user4, contracts.mockDT20Address) > '0')
+    assert(parseFloat(btpBeforeEXIT) == parseFloat(await oceanPool.getTokenBalance(contractDeployer, poolAddress))+ parseFloat(btpIn))
+    
+    // user4 still has BPT TOKENS (contractDeployer sent his ones)
+    assert((await oceanPool.getTokenBalance(user4, poolAddress)) != '0')
+
+    
   })
 })
