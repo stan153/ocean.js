@@ -290,7 +290,6 @@ describe('OceanPoolV4', () => {
   })
 
   it('#deployAndJoin - should deploy a new pool with 2 tokens on BAL V2, and ADDING LIQUIDITY', async () => {
-   
     const tokens = [contracts.mockOceanAddress, contracts.mockDT20Address]
 
     const weights = ['0.5', '0.5']
@@ -320,7 +319,7 @@ describe('OceanPoolV4', () => {
       contractDeployer,
       contracts.mockOceanAddress
     )
-    
+
     const amount = '10'
     receipt = await oceanPool.swapExactIn(
       contractDeployer,
@@ -364,7 +363,7 @@ describe('OceanPoolV4', () => {
       contractDeployer,
       contracts.mockDT20Address
     )
-    
+
     assert(
       parseFloat(dtBalanceBeforeSwap) ==
         parseFloat(dtBalanceAfterSwap) + parseFloat(amount)
@@ -404,7 +403,7 @@ describe('OceanPoolV4', () => {
       contractDeployer,
       contracts.mockOceanAddress
     )
-   
+
     const amount = '10'
     receipt = await oceanPool.swapExactOut(
       contractDeployer,
@@ -424,6 +423,86 @@ describe('OceanPoolV4', () => {
     assert(
       parseFloat(oceanBalanceBeforeSwap) ==
         parseFloat(oceanBalanceAfterSwap) - parseFloat(amount)
+    )
+  })
+
+  it('#getOceanFeePercentage - should get ocean swap fee for a given pool', async () => {
+    // OCEAN FEE IS ZERO BECAUSE THERE'S OCEAN TOKEN INTO THE POOL
+
+    const txReceipt = await oceanPool.getOceanFeePercentage(poolAddress)
+    assert(txReceipt == '0')
+  })
+
+  it('#getMarketFeePercentage - should get market swap fee for a given pool', async () => {
+    const txReceipt = await oceanPool.getMarketFeePercentage(poolAddress)
+    assert(txReceipt == '0.001')
+  })
+
+  it('#getTotalCommunityFees - should get total ocean community fees for a specific token', async () => {
+    const feesInOcean = await oceanPool.getTotalCommunityFees(poolAddress, 0)
+    assert(feesInOcean == '0')
+    const feesInDT = await oceanPool.getTotalCommunityFees(poolAddress, 1)
+    assert(feesInDT == '0')
+  })
+
+  it('#getTotalMarketFees - should get total ocean community fees for a specific token', async () => {
+    const feesInOcean = await oceanPool.getTotalMarketFees(poolAddress, 0)
+    assert(feesInOcean != '0')
+    const feesInDT = await oceanPool.getTotalMarketFees(poolAddress, 1)
+    assert(feesInDT != '0')
+  })
+
+  it('#getCollectedCommunityFees - should get total ocean community fees for a specific token', async () => {
+    // THEY ARE ALL ZERO since pool has ocean token
+    const feesInOcean = await oceanPool.getCollectedCommunityFees(poolAddress, 0)
+    assert(feesInOcean == '0')
+    const feesInDT = await oceanPool.getCollectedCommunityFees(poolAddress, 1)
+    assert(feesInDT == '0')
+  })
+
+  it('#getCollectedMarketFees - should get total ocean community fees for a specific token', async () => {
+    // THEY ARE ALL ZERO because we haven't withdrawn anything yet
+    const feesInOcean = await oceanPool.getCollectedMarketFees(poolAddress, 0)
+    assert(feesInOcean == '0')
+    const feesInDT = await oceanPool.getCollectedMarketFees(poolAddress, 1)
+    assert(feesInDT == '0')
+  })
+
+  it('#collectMarketplaceFee - should succeed to call if recipient is marketFeeCollector', async () => {
+    const receipt = await oceanPool.setMarketFeeCollector(
+      contractDeployer,
+      poolAddress,
+      user2
+    )
+    assert(receipt != null)
+
+    assert((await oceanPool.getTokenBalance(user2, contracts.mockOceanAddress)) == '0')
+    assert((await oceanPool.getTokenBalance(user2, contracts.mockDT20Address)) == '0')
+    const txReceipt = await oceanPool.collectMarketplaceFee(
+      contractDeployer,
+      poolAddress,
+      user2
+    )
+    assert(txReceipt != null)
+    const tokens = await oceanPool.getPoolTokens(poolAddress)
+
+    let feesInDT, feesInOcean
+    if (tokens[0] == contracts.mockOceanAddress) {
+      feesInOcean = await oceanPool.getTotalMarketFees(poolAddress, 0)
+      feesInDT = await oceanPool.getTotalMarketFees(poolAddress, 1)
+    } else {
+      feesInDT = await oceanPool.getTotalMarketFees(poolAddress, 0)
+      feesInOcean = await oceanPool.getTotalMarketFees(poolAddress, 1)
+    }
+
+    assert(feesInDT != '0')
+    assert(feesInOcean != '0')
+
+    assert(
+      (await oceanPool.getTokenBalance(user2, contracts.mockOceanAddress)) == feesInOcean
+    )
+    assert(
+      (await oceanPool.getTokenBalance(user2, contracts.mockDT20Address)) == feesInDT
     )
   })
 })

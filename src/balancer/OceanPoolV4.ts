@@ -294,7 +294,7 @@ export class OceanPoolV4 extends FactoryRouter {
   /** Get Total MarketFees
    * @return {Promise<string>} Total amount of fees that goes to the marketplace, collected from a pool in a specific token
    */
-  public async getTotalmarketFees(
+  public async getTotalMarketFees(
     poolAddress: string,
     tokenIndex: number
   ): Promise<string> {
@@ -306,7 +306,7 @@ export class OceanPoolV4 extends FactoryRouter {
   /** Get Already Collected Market fees
    * @return {Promise<string>}  Amount of fees that were already withdrawn from the marketplace, collected from a pool in a specific token
    */
-  public async getCollectedMarktetFees(
+  public async getCollectedMarketFees(
     poolAddress: string,
     tokenIndex: number
   ): Promise<string> {
