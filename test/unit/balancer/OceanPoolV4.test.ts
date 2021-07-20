@@ -19,6 +19,8 @@ describe('OceanPoolV4', () => {
   let contractDeployer: string
   let controller: string
   let user2: string
+  let user3: string
+  let user4: string
   let contracts: TestRouterHandler
   let oceanPool: OceanPoolV4
   let poolAddress: string
@@ -46,6 +48,8 @@ describe('OceanPoolV4', () => {
     contractDeployer = contracts.accounts[0]
     controller = contracts.accounts[1]
     user2 = contracts.accounts[2]
+    user3 = contracts.accounts[3]
+    user4 = contracts.accounts[4]
     await contracts.deployContracts(contractDeployer)
   })
 
@@ -504,5 +508,84 @@ describe('OceanPoolV4', () => {
     assert(
       (await oceanPool.getTokenBalance(user2, contracts.mockDT20Address)) == feesInDT
     )
+  })
+
+  it('#getInternalBalance - should get internal vault balances for a user', async () => {
+    // contractDeployer never left any balances into the vault.
+    // NOTE that balances are not pool specific. we only use the pool address to get the tokens addresses we want to check.
+    // But we could pass any token address
+    const tokens = await oceanPool.getPoolTokens(poolAddress)
+
+    const internalBalances = await oceanPool.getInternalBalance(contractDeployer, tokens)
+
+    assert(internalBalances[0] == 0)
+    assert(internalBalances[1] == 0)
+  })
+
+  it('#hasApprovedRelayer- should return if a relayer has been approved by a user', async () => {
+    // user2 is the relayer we would like to check. will get false since we haven't authorized any relayers.
+    // see BALANCER V2 for more detail on how to become a 'RELAYER', requires governance approval first
+
+    assert((await oceanPool.hasApprovedRelayer(contractDeployer, user2)) == false)
+  })
+
+  it('#getRateBTP- should get the actual rate for 1 BTP token', async () => {
+    // Rate starts at 1 and grows over time the more swap we do
+    assert(parseFloat(await oceanPool.getRateBPT(poolAddress)) > 1)
+  })
+
+  it('#genericSwap - should be able to swap from Ocean to DT using the generic function, EXACT OUT', async () => {
+    const amountOut = '10' // amount of DT20 we'd like to get from the swap and send to user3
+
+    receipt = await oceanPool.swapGeneric(
+      contractDeployer,
+      poolAddress,
+      1, // EXACT OUT (GIVEN OUT enum)
+      contracts.mockOceanAddress,
+      contracts.mockDT20Address,
+      amountOut,
+      '0x', // userData
+      contractDeployer, //sender
+      user3, // receiver
+      false, // we don't use internal balances
+      false, // we don't use internal balances
+      '1000' // max Ocean In
+    )
+    assert(receipt != null)
+
+    // we check user3 has received the amount we asked for (10)
+    assert(
+      (await oceanPool.getTokenBalance(user3, contracts.mockDT20Address)) == amountOut
+    )
+  })
+
+  it('#genericSwap - should be able to swap from Ocean to DT using the generic function, EXACT OUT, but with internal balances', async () => {
+    const amountOut = '10' // amount of DT20 we'd like to get from the swap and send to user4 (this time internal balance)
+
+    receipt = await oceanPool.swapGeneric(
+      contractDeployer,
+      poolAddress,
+      1, // EXACT OUT (GIVEN OUT enum)
+      contracts.mockOceanAddress,
+      contracts.mockDT20Address,
+      amountOut,
+      '0x', // userData
+      contractDeployer, //sender
+      user4, // receiver
+      false, // we don't use internal balances
+      true, // we want to get 10 DT to user4 but store them as internal balance
+      '1000' // max Ocean In
+    )
+    assert(receipt != null)
+
+    // user4 has received no tokens because they are stored as internal balance
+    assert((await oceanPool.getTokenBalance(user4, contracts.mockDT20Address)) == '0')
+
+    // we now check the internal balance for user4
+    const dtInternal = await oceanPool.getInternalBalance(user4, [
+      contracts.mockDT20Address
+    ])
+
+    assert(dtInternal[0] == parseFloat(web3.utils.toWei(amountOut)))
   })
 })

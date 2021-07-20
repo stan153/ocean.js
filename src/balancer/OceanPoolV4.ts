@@ -317,12 +317,12 @@ export class OceanPoolV4 extends FactoryRouter {
 
   /** Get appreciation of one BPT relative to the
    * underlying tokens. This starts at 1 when the pool is created and grows over time
-   * @return {Promise<number>}
+   * @return {Promise<string>}
    */
-  public async getRateBPT(poolAddress: string): Promise<number> {
+  public async getRateBPT(poolAddress: string): Promise<string> {
     const pool = new this.web3.eth.Contract(this.poolABI, poolAddress)
     const trxReceipt = await pool.methods.getRate().call()
-    return trxReceipt
+    return  this.web3.utils.fromWei(trxReceipt)
   }
 
   /** Get the internal balances on the Balancer Vault for a specific user and tokens
