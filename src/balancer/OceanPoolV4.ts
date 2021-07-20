@@ -248,7 +248,7 @@ export class OceanPoolV4 extends FactoryRouter {
     const trxReceipt = await pool.methods.getSwapFeePercentage().call()
     return this.web3.utils.fromWei(trxReceipt)
   }
-  
+
   /** Get Ocean Fee on swap (for Ocean Community)
    * @return {Promise<string>} Ocean Fee (Decimals) => 0.001 => 0.1%
    */
@@ -325,8 +325,29 @@ export class OceanPoolV4 extends FactoryRouter {
     return trxReceipt
   }
 
-  /** Get LP Balance
-   * @return {Promise<string>} LP balance
+  /** Get the internal balances on the Balancer Vault for a specific user and tokens
+   * @return {Promise<number[]>} Array of balances, order as the tokens[]
+   */
+  public async getInternalBalance(account: string, tokens: string[]): Promise<number[]> {
+    const trxReceipt = await this.vault.methods.getInternalBalance(account, tokens).call()
+    return trxReceipt
+  }
+
+  /** Check if a relayer has been approved by a user
+   * @return {Promise<boolean>} LP balance
+   */
+  public async hasApprovedRelayer(
+    account: string,
+    relayerAddress: string
+  ): Promise<boolean> {
+    const trxReceipt = await this.vault.methods
+      .hasApprovedRelayer(account, relayerAddress)
+      .call()
+    return trxReceipt
+  }
+
+  /** Get a user's token Balance
+   * @return {Promise<string>} Get user's token balance
    */
   public async getTokenBalance(account: string, tokenAddress: string): Promise<string> {
     const token = new this.web3.eth.Contract(this.erc20ABI, tokenAddress)
@@ -1221,6 +1242,52 @@ export class OceanPoolV4 extends FactoryRouter {
     try {
       trxReceipt = await this.vault.methods
         .swap(swapStruct, fundManagement, this.web3.utils.toWei(limit), deadline)
+        .send({ from: account, value: 0, gas: estGas + 1 })
+    } catch (e) {
+      this.logger.error(`ERROR: Failed to swapExactIn: ${e.message}`)
+      throw new Error(`ERROR: Failed to swapExactIn: ${e.message}`)
+    }
+    return trxReceipt
+  }
+
+  /**
+   * Allows `relayer` to act as a relayer for `sender` if `approved` is true, and disallows it otherwise.
+   * See BALANCER V2 docs for more detail on how relayer and approval works
+   * @param account user which triggers transaction
+   * @param sender pool name
+   * @param relayer token IN
+   * @param approved token OUT
+   
+   * @return txId
+   */
+
+  public async setRelayerApproval(
+    account: string,
+    sender: string,
+    relayer: string,
+    approved: boolean
+  ): Promise<TransactionReceipt> {
+    if (this.web3 === null) {
+      this.logger.error('ERROR: Web3 object is null')
+      return null
+    }
+
+    let trxReceipt = null
+    const gasLimitDefault = this.GASLIMIT_DEFAULT
+
+    let estGas
+    try {
+      estGas = await this.vault.methods
+        .setRelayerApproval(sender, relayer, approved)
+        .estimateGas({ from: account }, (err, estGas) => (err ? gasLimitDefault : estGas))
+    } catch (e) {
+      this.logger.log('Error estimate gas deployPool')
+      this.logger.log(e)
+      estGas = gasLimitDefault
+    }
+    try {
+      trxReceipt = await this.vault.methods
+        .setRelayerApproval(sender, relayer, approved)
         .send({ from: account, value: 0, gas: estGas + 1 })
     } catch (e) {
       this.logger.error(`ERROR: Failed to swapExactIn: ${e.message}`)
