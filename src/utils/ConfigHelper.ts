@@ -97,10 +97,20 @@ export const configHelperNetworks: ConfigHelperConfig[] = [
     ...configHelperNetworksBase,
     networkId: 2021000,
     network: 'gaiaxtestnet',
-    nodeUri: 'https://gaia-x.rpc',
+    nodeUri: 'https://rpc.gaiaxtestnet.oceanprotocol.com',
     providerUri: 'https://provider.gaiaxtestnet.oceanprotocol.com',
     subgraphUri: 'https://subgraph.gaiaxtestnet.oceanprotocol.com',
     explorerUri: 'https://blockscout.gaiaxtestnet.oceanprotocol.com'
+  },
+  {
+    ...configHelperNetworksBase,
+    networkId: 2021001,
+    network: 'catenaxtestnet',
+    nodeUri: 'https://rpc.catenaxtestnet.oceanprotocol.com',
+    providerUri: 'https://provider.catenaxtestnet.oceanprotocol.com',
+    subgraphUri: 'https://subgraph.catenaxtestnet.oceanprotocol.com',
+    explorerUri: 'https://blockscout.catenaxtestnet.oceanprotocol.com',
+    metadataCacheUri: 'https://aquarius.catenaxtestnet.oceanprotocol.com'
   },
   {
     ...configHelperNetworksBase,
@@ -119,6 +129,33 @@ export const configHelperNetworks: ConfigHelperConfig[] = [
     providerUri: 'https://provider.bsc.oceanprotocol.com',
     subgraphUri: 'https://subgraph.bsc.oceanprotocol.com',
     explorerUri: 'https://bscscan.com/'
+  },
+  {
+    ...configHelperNetworksBase,
+    networkId: 44787,
+    network: 'celoalfajores',
+    nodeUri: 'https://alfajores-forno.celo-testnet.org',
+    providerUri: 'https://provider.celoalfajores.oceanprotocol.com',
+    subgraphUri: 'https://subgraph.celoalfajores.oceanprotocol.com',
+    explorerUri: 'https://alfajores-blockscout.celo-testnet.org'
+  },
+  {
+    ...configHelperNetworksBase,
+    networkId: 246,
+    network: 'energyweb',
+    nodeUri: 'https://rpc.energyweb.org',
+    providerUri: 'https://provider.energyweb.oceanprotocol.com',
+    subgraphUri: 'https://subgraph.energyweb.oceanprotocol.com',
+    explorerUri: 'https://explorer.energyweb.org'
+  },
+  {
+    ...configHelperNetworksBase,
+    networkId: 1285,
+    network: 'moonriver',
+    nodeUri: 'https://moonriver.api.onfinality.io/public',
+    providerUri: 'https://provider.moonriver.oceanprotocol.com',
+    subgraphUri: 'https://subgraph.moonriver.oceanprotocol.com',
+    explorerUri: 'https://blockscout.moonriver.moonbeam.network'
   }
 ]
 
