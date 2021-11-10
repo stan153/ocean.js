@@ -1,9 +1,10 @@
 import { DDO } from '../ddo/DDO';
-import { ServiceComputePrivacy, ServiceCompute, publisherTrustedAlgorithm } from '../ddo/interfaces/Service';
+import { ServiceComputePrivacy, ServiceCompute, publisherTrustedAlgorithm, ServiceCustomParametersRequired } from '../ddo/interfaces/Service';
 import Account from './Account';
 import { SubscribablePromise } from '../utils';
 import { Instantiable, InstantiableConfig } from '../Instantiable.abstract';
 import { ComputeOutput, ComputeJob, ComputeInput, ComputeAlgorithm } from './interfaces/Compute';
+import { UserCustomParameters } from '../provider/Provider';
 export declare enum OrderProgressStep {
     TransferDataToken = 0
 }
@@ -61,11 +62,11 @@ export declare class Compute extends Instantiable {
             supportedContainers: Container[];
         };
     };
-    createComputeService(consumerAccount: Account, cost: string, datePublished: string, providerAttributes: any, computePrivacy?: ServiceComputePrivacy, timeout?: number, providerUri?: string): ServiceCompute;
+    createComputeService(consumerAccount: Account, cost: string, datePublished: string, providerAttributes: any, computePrivacy?: ServiceComputePrivacy, timeout?: number, providerUri?: string, requiredCustomParameters?: ServiceCustomParametersRequired): ServiceCompute;
     private checkOutput;
     isOrderable(dataset: DDO | string, serviceIndex: number, algorithm: ComputeAlgorithm, algorithmDDO?: DDO): Promise<boolean>;
-    orderAsset(consumerAccount: string, dataset: DDO | string, serviceIndex: number, algorithm: ComputeAlgorithm, mpAddress?: string, computeAddress?: string, searchPreviousOrders?: boolean): SubscribablePromise<OrderProgressStep, string>;
-    orderAlgorithm(asset: DDO | string, serviceType: string, payerAddress: string, serviceIndex?: number, mpAddress?: string, consumerAddress?: string, searchPreviousOrders?: boolean): Promise<string>;
+    orderAsset(consumerAccount: string, dataset: DDO | string, serviceIndex: number, algorithm: ComputeAlgorithm, mpAddress?: string, computeAddress?: string, userCustomParameters?: UserCustomParameters, searchPreviousOrders?: boolean): SubscribablePromise<OrderProgressStep, string>;
+    orderAlgorithm(asset: DDO | string, serviceType: string, payerAddress: string, serviceIndex?: number, mpAddress?: string, consumerAddress?: string, userCustomParameters?: UserCustomParameters, searchPreviousOrders?: boolean): Promise<string>;
     editComputePrivacy(ddo: DDO, serviceIndex: number, computePrivacy: ServiceComputePrivacy): Promise<DDO>;
     toggleAllowAllPublishedAlgorithms(ddo: DDO, serviceIndex: number, newState: boolean): Promise<DDO>;
     createPublisherTrustedAlgorithmfromDID(did: string, ddo?: DDO): Promise<publisherTrustedAlgorithm>;

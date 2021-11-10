@@ -1,11 +1,12 @@
-import { SearchQuery, QueryResult } from '../metadatacache/MetadataCache';
 import { DDO } from '../ddo/DDO';
 import { Metadata } from '../ddo/interfaces/Metadata';
-import { Service, ServiceAccess } from '../ddo/interfaces/Service';
+import { Service, ServiceAccess, ServiceCustomParameter, ServiceCustomParametersRequired } from '../ddo/interfaces/Service';
+import { SearchQuery } from '../metadatacache/MetadataCache';
 import { EditableMetadata } from '../ddo/interfaces/EditableMetadata';
 import Account from './Account';
 import { SubscribablePromise } from '../utils';
 import { Instantiable, InstantiableConfig } from '../Instantiable.abstract';
+import { UserCustomParameters } from '../provider/Provider';
 import { TransactionReceipt } from 'web3-core';
 import { CredentialType } from '../ddo/interfaces/Credentials';
 import { Consumable } from '../ddo/interfaces/Consumable';
@@ -34,9 +35,7 @@ export interface Order {
 export declare class Assets extends Instantiable {
     static getInstance(config: InstantiableConfig): Promise<Assets>;
     create(metadata: Metadata, publisher: Account, services?: Service[], dtAddress?: string, cap?: string, name?: string, symbol?: string, providerUri?: string): SubscribablePromise<CreateProgressStep, DDO>;
-    ownerAssets(owner: string): Promise<QueryResult>;
     resolve(did: string): Promise<DDO>;
-    resolveByDTAddress(dtAddress: string, offset?: number, page?: number, sort?: number): Promise<DDO[]>;
     editMetadata(ddo: DDO, newMetadata: EditableMetadata): Promise<DDO>;
     updateCredentials(ddo: DDO, credentialType: CredentialType, allowList: string[], denyList: string[]): Promise<DDO>;
     checkCredential(ddo: DDO, credentialType: CredentialType, value: string): Consumable;
@@ -44,15 +43,15 @@ export declare class Assets extends Instantiable {
     updateMetadata(ddo: DDO, consumerAccount: string): Promise<TransactionReceipt>;
     editServiceTimeout(ddo: DDO, serviceIndex: number, timeout: number): Promise<DDO>;
     creator(asset: DDO | string): Promise<string>;
-    query(query: SearchQuery): Promise<QueryResult>;
-    search(text: string): Promise<QueryResult>;
     getServiceByType(asset: DDO | string, serviceType: string): Promise<Service>;
     getServiceByIndex(asset: DDO | string, serviceIndex: number): Promise<Service>;
-    createAccessServiceAttributes(creator: Account, cost: string, datePublished: string, timeout?: number, providerUri?: string): Promise<ServiceAccess>;
-    initialize(asset: DDO | string, serviceType: string, consumerAddress: string, serviceIndex: number, serviceEndpoint: string): Promise<any>;
-    order(asset: DDO | string, serviceType: string, payerAddress: string, serviceIndex?: number, mpAddress?: string, consumerAddress?: string, searchPreviousOrders?: boolean): Promise<string>;
+    query(query: SearchQuery): Promise<any>;
+    createAccessServiceAttributes(creator: Account, cost: string, datePublished: string, timeout?: number, providerUri?: string, requiredParameters?: ServiceCustomParametersRequired): Promise<ServiceAccess>;
+    initialize(asset: DDO | string, serviceType: string, consumerAddress: string, serviceIndex: number, serviceEndpoint: string, userCustomParameters?: UserCustomParameters): Promise<any>;
+    order(asset: DDO | string, serviceType: string, payerAddress: string, serviceIndex?: number, mpAddress?: string, consumerAddress?: string, userCustomParameters?: UserCustomParameters, searchPreviousOrders?: boolean): Promise<string>;
     download(asset: DDO | string, txId: string, tokenAddress: string, consumerAccount: Account, destination: string): Promise<string | true>;
     simpleDownload(dtAddress: string, serviceEndpoint: string, txId: string, account: string): Promise<string>;
     getOrderHistory(account: Account, serviceType?: string, fromBlock?: number): Promise<Order[]>;
     isConsumable(ddo: DDO, consumer?: string): Promise<Consumable>;
+    isUserCustomParametersValid(serviceCustomParameters: ServiceCustomParameter[], userCustomParameters?: UserCustomParameters): Promise<boolean>;
 }

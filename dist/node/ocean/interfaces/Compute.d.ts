@@ -44,4 +44,7 @@ export interface ComputeAlgorithm {
     meta?: MetadataAlgorithm;
     transferTxId?: string;
     dataToken?: string;
+    algoCustomParameters?: {
+        [key: string]: any;
+    };
 }

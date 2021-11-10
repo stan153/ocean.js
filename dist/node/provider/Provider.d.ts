@@ -9,6 +9,9 @@ export interface ServiceEndpoint {
     method: string;
     urlPath: string;
 }
+export interface UserCustomParameters {
+    [key: string]: any;
+}
 export declare class Provider extends Instantiable {
     nonce: string;
     private baseUrl;
@@ -27,9 +30,9 @@ export declare class Provider extends Instantiable {
     fileinfo(url: string): Promise<File[]>;
     isFileConsumable(did: DID, serviceIndex: number): Promise<boolean>;
     getNonce(consumerAddress: string): Promise<string>;
-    initialize(asset: DDO | string, serviceIndex: number, serviceType: string, consumerAddress: string): Promise<string>;
-    download(did: string, txId: string, tokenAddress: string, serviceType: string, serviceIndex: string, destination: string, account: Account, files: File[], index?: number): Promise<any>;
-    computeStart(did: string, consumerAccount: Account, algorithm: ComputeAlgorithm, output?: ComputeOutput, txId?: string, serviceIndex?: string, serviceType?: string, tokenAddress?: string, additionalInputs?: ComputeInput[]): Promise<ComputeJob | ComputeJob[]>;
+    initialize(asset: DDO | string, serviceIndex: number, serviceType: string, consumerAddress: string, userCustomParameters?: UserCustomParameters): Promise<string>;
+    download(did: string, txId: string, tokenAddress: string, serviceType: string, serviceIndex: string, destination: string, account: Account, files: File[], index?: number, userCustomParameters?: UserCustomParameters): Promise<any>;
+    computeStart(did: string, consumerAccount: Account, algorithm: ComputeAlgorithm, output?: ComputeOutput, txId?: string, serviceIndex?: string, serviceType?: string, tokenAddress?: string, additionalInputs?: ComputeInput[], userCustomParameters?: UserCustomParameters): Promise<ComputeJob | ComputeJob[]>;
     computeStop(did: string, consumerAccount: Account, jobId: string): Promise<ComputeJob | ComputeJob[]>;
     computeDelete(did: string, consumerAccount: Account, jobId: string): Promise<ComputeJob | ComputeJob[]>;
     computeStatus(did: string, consumerAccount: Account, jobId?: string, txId?: string, sign?: boolean): Promise<ComputeJob | ComputeJob[]>;

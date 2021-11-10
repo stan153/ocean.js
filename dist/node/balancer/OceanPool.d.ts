@@ -66,7 +66,7 @@ export declare class OceanPool extends Pool {
     getDTMaxRemoveLiquidity(poolAddress: string): Promise<string>;
     getOceanMaxRemoveLiquidity(poolAddress: string): Promise<string>;
     buyDT(account: string, poolAddress: string, dtAmountWanted: string, maxOceanAmount: string, maxPrice?: string): Promise<TransactionReceipt>;
-    buyDTWithExactOcean(account: string, poolAddress: string, minimumdtAmountWanted: string, OceanAmount: string, maxPrice?: string): Promise<TransactionReceipt>;
+    buyDTWithExactOcean(account: string, poolAddress: string, minimumdtAmountWanted: string, oceanAmount: string, maxPrice?: string): Promise<TransactionReceipt>;
     sellDT(account: string, poolAddress: string, dtAmount: string, oceanAmountWanted: string, maxPrice?: string): Promise<TransactionReceipt>;
     addDTLiquidity(account: string, poolAddress: string, amount: string): Promise<TransactionReceipt>;
     removeDTLiquidity(account: string, poolAddress: string, amount: string, maximumPoolShares: string): Promise<TransactionReceipt>;

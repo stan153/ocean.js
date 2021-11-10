@@ -3,15 +3,9 @@ import DID from '../ocean/DID';
 import { Logger } from '../utils';
 import { WebServiceConnector } from '../ocean/utils/WebServiceConnector';
 import { Metadata, ValidateMetadata } from '../ddo/interfaces';
-export interface QueryResult {
-    results: DDO[];
-    page: number;
-    totalPages: number;
-    totalResults: number;
-}
 export interface SearchQuery {
-    offset?: number;
-    page?: number;
+    from?: number;
+    size?: number;
     query: {
         match?: {
             [property: string]: string | number | boolean | Record<string, string | number | boolean>;
@@ -24,7 +18,7 @@ export interface SearchQuery {
         };
     };
     sort?: {
-        [jsonPath: string]: number;
+        [jsonPath: string]: string;
     };
 }
 export declare class MetadataCache {
@@ -35,16 +29,13 @@ export declare class MetadataCache {
     constructor(metadataCacheUri: string, logger: Logger);
     getVersionInfo(): Promise<any>;
     getAccessUrl(accessToken: any, payload: any): Promise<string>;
-    queryMetadata(query: SearchQuery): Promise<QueryResult>;
-    storeDDO(ddo: DDO): Promise<DDO>;
+    queryMetadata(query: SearchQuery): Promise<any>;
     encryptDDO(ddo: any): Promise<any>;
     validateMetadata(metadata: Metadata | DDO): Promise<ValidateMetadata>;
     retrieveDDO(did: DID | string, metadataServiceEndpoint?: string): Promise<DDO>;
     retrieveDDOByUrl(metadataServiceEndpoint?: string): Promise<DDO>;
-    transferOwnership(did: DID | string, newOwner: string, updated: string, signature: string): Promise<string>;
-    getOwnerAssets(owner: string): Promise<QueryResult>;
-    retire(did: DID | string, updated: string, signature: string): Promise<string>;
     getServiceEndpoint(did: DID): string;
     getURI(): string;
-    private transformResult;
+    sleep(ms: number): Promise<unknown>;
+    waitForAqua(did: string, txid?: string): Promise<void>;
 }

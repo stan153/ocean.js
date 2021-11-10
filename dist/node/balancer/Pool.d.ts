@@ -14,7 +14,7 @@ export declare class Pool extends PoolFactory {
     createPool(account: string): Promise<TransactionReceipt>;
     setup(account: string, poolAddress: string, dataToken: string, dataTokenAmount: string, dataTokenWeight: string, baseToken: string, baseTokenAmount: string, baseTokenWeight: string, swapFee: string): Promise<string>;
     allowance(tokenAdress: string, owner: string, spender: string): Promise<string>;
-    approve(account: string, tokenAddress: string, spender: string, amount: string, force?: boolean): Promise<TransactionReceipt>;
+    approve(account: string, tokenAddress: string, spender: string, amount: string, force?: boolean): Promise<TransactionReceipt | string>;
     sharesBalance(account: string, poolAddress: string): Promise<string>;
     addToPool(account: string, poolAddress: string, tokens: TokensToAdd[]): Promise<void>;
     setSwapFee(account: string, poolAddress: string, fee: string): Promise<TransactionReceipt>;
