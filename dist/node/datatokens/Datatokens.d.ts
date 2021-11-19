@@ -1,5 +1,6 @@
 import Web3 from 'web3';
 import { AbiItem } from 'web3-utils/types';
+import { ConfigHelperConfig } from '../utils/ConfigHelper';
 import { Logger } from '../utils';
 import { TransactionReceipt } from 'web3-core';
 export declare class DataTokens {
@@ -10,7 +11,8 @@ export declare class DataTokens {
     web3: Web3;
     private logger;
     startBlock: number;
-    constructor(factoryAddress: string, factoryABI: AbiItem | AbiItem[], datatokensABI: AbiItem | AbiItem[], web3: Web3, logger: Logger, startBlock?: number);
+    private config;
+    constructor(factoryAddress: string, factoryABI: AbiItem | AbiItem[], datatokensABI: AbiItem | AbiItem[], web3: Web3, logger: Logger, config?: ConfigHelperConfig);
     generateDtName(wordList?: {
         nouns: string[];
         adjectives: string[];

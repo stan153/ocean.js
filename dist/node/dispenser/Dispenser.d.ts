@@ -4,6 +4,7 @@ import { AbiItem } from 'web3-utils/types';
 import Web3 from 'web3';
 import { SubscribablePromise, Logger } from '../utils';
 import { DataTokens } from '../datatokens/Datatokens';
+import { ConfigHelperConfig } from '../utils/ConfigHelper';
 export interface DispenserToken {
     active: boolean;
     owner: string;
@@ -30,7 +31,8 @@ export declare class OceanDispenser {
     private logger;
     datatokens: DataTokens;
     startBlock: number;
-    constructor(web3: Web3, logger: Logger, dispenserAddress: string, dispenserABI: AbiItem | AbiItem[], datatokens: DataTokens, startBlock?: number);
+    private config;
+    constructor(web3: Web3, logger: Logger, dispenserAddress: string, dispenserABI: AbiItem | AbiItem[], datatokens: DataTokens, config?: ConfigHelperConfig);
     status(dataTokenAddress: string): Promise<DispenserToken>;
     activate(dataToken: string, maxTokens: string, maxBalance: string, address: string): Promise<TransactionReceipt>;
     deactivate(dataToken: string, address: string): Promise<TransactionReceipt>;

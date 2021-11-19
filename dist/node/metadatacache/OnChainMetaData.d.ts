@@ -4,6 +4,7 @@ import { Contract } from 'web3-eth-contract';
 import { AbiItem } from 'web3-utils/types';
 import Web3 from 'web3';
 import { Logger } from '../utils';
+import { ConfigHelperConfig } from '../utils/ConfigHelper';
 import { MetadataCache } from '../metadatacache/MetadataCache';
 export interface rawMetadata {
     flags: number;
@@ -17,7 +18,8 @@ export declare class OnChainMetadata {
     DDOContract: Contract;
     private logger;
     metadataCache: MetadataCache;
-    constructor(web3: Web3, logger: Logger, DDOContractAddress: string, DDOContractABI: AbiItem | AbiItem[], metadataCache: MetadataCache);
+    private config;
+    constructor(web3: Web3, logger: Logger, DDOContractAddress: string, DDOContractABI: AbiItem | AbiItem[], metadataCache: MetadataCache, config?: ConfigHelperConfig);
     compressDDO(data: any): Promise<string>;
     publish(did: string, ddo: DDO, consumerAccount: string, encrypt?: boolean, validate?: boolean): Promise<TransactionReceipt>;
     update(did: string, ddo: DDO, consumerAccount: string, encrypt?: boolean, validate?: boolean): Promise<TransactionReceipt>;

@@ -4,6 +4,7 @@ import { AbiItem } from 'web3-utils/types';
 import Web3 from 'web3';
 import { SubscribablePromise, Logger } from '../utils';
 import { DataTokens } from '../datatokens/Datatokens';
+import { ConfigHelperConfig } from '../utils/ConfigHelper';
 export interface FixedPriceExchange {
     exchangeID?: string;
     exchangeOwner: string;
@@ -33,7 +34,8 @@ export declare class OceanFixedRateExchange {
     private logger;
     datatokens: DataTokens;
     startBlock: number;
-    constructor(web3: Web3, logger: Logger, fixedRateExchangeAddress: string, fixedRateExchangeABI: AbiItem | AbiItem[], oceanAddress: string, datatokens: DataTokens, startBlock?: number);
+    private config;
+    constructor(web3: Web3, logger: Logger, fixedRateExchangeAddress: string, fixedRateExchangeABI: AbiItem | AbiItem[], oceanAddress: string, datatokens: DataTokens, config?: ConfigHelperConfig);
     create(dataToken: string, rate: string, address: string, amount?: string): SubscribablePromise<FixedRateCreateProgressStep, TransactionReceipt>;
     createExchange(baseToken: string, dataToken: string, rate: string, address: string, amount?: string): SubscribablePromise<FixedRateCreateProgressStep, TransactionReceipt>;
     generateExchangeId(dataToken: string, owner: string): Promise<string>;

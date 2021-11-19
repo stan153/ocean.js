@@ -5,6 +5,10 @@ export interface ConfigHelperConfig extends Config {
     subgraphUri: string;
     explorerUri: string;
     oceanTokenSymbol: string;
+    transactionBlockTimeout: number;
+    transactionConfirmationBlocks: number;
+    transactionPollingTimeout: number;
+    gasFeeMultiplier: number;
 }
 export declare const configHelperNetworks: ConfigHelperConfig[];
 export declare class ConfigHelper {

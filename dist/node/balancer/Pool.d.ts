@@ -3,6 +3,7 @@ import { AbiItem } from 'web3-utils/types';
 import { TransactionReceipt } from 'web3-core';
 import { Logger } from '../utils';
 import { PoolFactory } from './PoolFactory';
+import { ConfigHelperConfig } from '../utils/ConfigHelper';
 export interface TokensToAdd {
     address: string;
     amount: string;
@@ -10,7 +11,7 @@ export interface TokensToAdd {
 }
 export declare class Pool extends PoolFactory {
     poolABI: AbiItem | AbiItem[];
-    constructor(web3: Web3, logger: Logger, factoryABI?: AbiItem | AbiItem[], poolABI?: AbiItem | AbiItem[], factoryAddress?: string);
+    constructor(web3: Web3, logger: Logger, factoryABI?: AbiItem | AbiItem[], poolABI?: AbiItem | AbiItem[], factoryAddress?: string, config?: ConfigHelperConfig);
     createPool(account: string): Promise<TransactionReceipt>;
     setup(account: string, poolAddress: string, dataToken: string, dataTokenAmount: string, dataTokenWeight: string, baseToken: string, baseTokenAmount: string, baseTokenWeight: string, swapFee: string): Promise<string>;
     allowance(tokenAdress: string, owner: string, spender: string): Promise<string>;

@@ -3,6 +3,7 @@ import { AbiItem } from 'web3-utils/types';
 import { TransactionReceipt } from 'web3-core';
 import { Pool } from './Pool';
 import { SubscribablePromise, Logger } from '../utils';
+import { ConfigHelperConfig } from '../utils/ConfigHelper';
 declare type PoolTransactionType = 'swap' | 'join' | 'exit';
 export interface PoolDetails {
     poolAddress: string;
@@ -40,7 +41,7 @@ export declare class OceanPool extends Pool {
     oceanAddress: string;
     dtAddress: string;
     startBlock: number;
-    constructor(web3: Web3, logger: Logger, factoryABI?: AbiItem | AbiItem[], poolABI?: AbiItem | AbiItem[], factoryAddress?: string, oceanAddress?: string, startBlock?: number);
+    constructor(web3: Web3, logger: Logger, factoryABI?: AbiItem | AbiItem[], poolABI?: AbiItem | AbiItem[], factoryAddress?: string, oceanAddress?: string, config?: ConfigHelperConfig);
     create(account: string, dtAddress: string, dtAmount: string, dtWeight: string, oceanAmount: string, fee: string): SubscribablePromise<PoolCreateProgressStep, TransactionReceipt>;
     getDTAddress(poolAddress: string): Promise<string>;
     getOceanReserve(poolAddress: string): Promise<string>;
