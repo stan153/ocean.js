@@ -766,6 +766,12 @@ export class Assets extends Instantiable {
         ddo.id
       )
       if (!isPermit) return denyConsume
+
+      // temporary for old rbac-server
+      const permission = this.checkCredential(ddo, 'address', consumer)
+      allowedConsume.status = permission.status
+      allowedConsume.message = permission.message
+      allowedConsume.result = permission.result
     }
     return allowedConsume
   }
