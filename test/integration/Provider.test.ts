@@ -1,36 +1,66 @@
-import { Ocean } from '../../src/ocean/Ocean'
-import config from './config'
 import { assert } from 'chai'
+import { getTestConfig, provider } from '../config'
+import { Config, Provider } from '../../src'
+import { Signer } from 'ethers'
+import { FileInfo } from '../../src/@types'
 
-describe('Provider tests', () => {
-  let ocean: Ocean
+describe('Provider tests', async () => {
+  let config: Config
+  let signer: Signer
+  let providerInstance: Provider
+
+  before(async () => {
+    signer = (await provider.getSigner(0)) as Signer
+    config = await getTestConfig(signer)
+  })
 
   it('Initialize Ocean', async () => {
-    ocean = await Ocean.getInstance(config)
+    providerInstance = new Provider()
   })
+
   it('Alice tests invalid provider', async () => {
-    const valid = await ocean.provider.isValidProvider('http://example.net')
+    const valid = await providerInstance.isValidProvider('http://example.net')
     assert(valid === false)
   })
+
   it('Alice tests valid provider', async () => {
-    const valid = await ocean.provider.isValidProvider('http://127.0.0.1:8030')
+    const valid = await providerInstance.isValidProvider(config.providerUri)
     assert(valid === true)
   })
-  it('Alice should be able to get computeLimits', async () => {
-    const computeLimits = await ocean.provider.computeLimits
-    assert(computeLimits.algoTimeLimit, 'Invalid algoTimeLimits')
-    assert(computeLimits.storageExpiry, 'Invalid storageExpiry')
+
+  it('Alice checks URL fileinfo', async () => {
+    const fileinfo: FileInfo[] = await providerInstance.getFileInfo(
+      {
+        type: 'url',
+        url: 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-abstract.xml.gz-rss.xml',
+        method: 'GET'
+      },
+      config.providerUri
+    )
+    assert(fileinfo[0].valid === true, 'Sent file is not valid')
   })
-  it('Check a valid URL', async () => {
-    const url = 'https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json'
-    const response = await ocean.provider.fileinfo(url)
-    assert(response[0].contentLength === '1161')
-    assert(response[0].contentType === 'application/json')
+
+  it('Alice checks Arweave fileinfo', async () => {
+    const fileinfo: FileInfo[] = await providerInstance.getFileInfo(
+      {
+        type: 'arweave',
+        transactionId: 'a4qJoQZa1poIv5guEzkfgZYSAD0uYm7Vw4zm_tCswVQ'
+      },
+      config.providerUri
+    )
+    assert(fileinfo[0].valid === true, 'Sent file is not valid')
   })
-  it('Check anm invalid URL', async () => {
-    const url = 'https://s3.amazonaws.com/testfiles.oceanprotocol.com/nosuchfile'
-    const response = await ocean.provider.fileinfo(url)
-    assert(response[0].contentLength === undefined)
-    assert(response[0].contentType === undefined)
+
+  it('Alice tests compute environments', async () => {
+    const computeEnvs = await providerInstance.getComputeEnvironments(config.providerUri)
+    assert(computeEnvs, 'No Compute environments found')
+  })
+
+  it('Alice tests getNonce', async () => {
+    const nonce = await providerInstance.getNonce(
+      config.providerUri,
+      '0xe2DD09d719Da89e5a3D0F2549c7E24566e947260'
+    )
+    assert(nonce, 'could not get nonce for the sent address')
   })
 })

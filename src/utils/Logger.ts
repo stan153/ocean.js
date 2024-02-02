@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export enum LogLevel {
   None = -1,
   Error = 0,
@@ -5,9 +6,12 @@ export enum LogLevel {
   Log = 2,
   Verbose = 3
 }
+/* eslint-enable no-unused-vars */
 
 export class Logger {
-  constructor(private logLevel: LogLevel = LogLevel.Error) {}
+  constructor(private logLevel?: LogLevel) {
+    this.logLevel = logLevel || LogLevel.Error
+  }
 
   public setLevel(logLevel: LogLevel): void {
     this.logLevel = logLevel
@@ -41,4 +45,3 @@ export class Logger {
 }
 
 export const LoggerInstance = new Logger()
-export default LoggerInstance

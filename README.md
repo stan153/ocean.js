@@ -13,27 +13,16 @@
 
 With ocean.js, you can:
 
-- **Publish** data services: downloadable files or compute-to-data.
-  Ocean creates a new [ERC20](https://github.com/ethereum/EIPs/blob/7f4f0377730f5fc266824084188cc17cf246932e/EIPS/eip-20.md)
-  datatoken for each dataset / data service.
-- **Mint** datatokens for the service
-- **Sell** datatokens via an OCEAN-datatoken Balancer pool (for auto price discovery), or for a fixed price
-- **Stake** OCEAN on datatoken pools
-- **Consume** datatokens, to access the service
-- **Transfer** datatokens to another owner, and **all other ERC20 actions**
-  using [web3.js](https://web3js.readthedocs.io/en/v1.2.9/web3-eth-contract.html) etc.
+- **Publish** data services: downloadable files or compute-to-data. Create an ERC721 **data NFT** for each service, and ERC20 **datatoken** for access (1.0 datatokens to access).
+- **Sell** datatokens for a fixed price. Sell data NFTs.
+- **Transfer** data NFTs & datatokens to another owner, and **all other ERC721 & ERC20 actions** using [web3.js](https://web3js.readthedocs.io/en/v1.2.9/web3-eth-contract.html) etc.
 
 ocean.js is part of the [Ocean Protocol](https://oceanprotocol.com) toolset.
 
-This is in alpha state and you can expect running into problems. If you run into them, please open up a [new issue](https://github.com/oceanprotocol/ocean.js/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
+This is in alpha state. If you run into problems, please open up a [new issue](https://github.com/oceanprotocol/ocean.js/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
 
 - [📚 Prerequisites](#-prerequisites)
-- [🏗 Installation](#-installation)
-- [🏄 Quickstart](#-quickstart)
-  - [Beginners Guide](#beginners-guide)
-  - [Simple Flow](#simple-flow)
-  - [Marketplace Flow](#marketplace-flow)
-  - [📖 Learn More](#learn-more)
+- [🏗 Installation & Usage](#-installation--usage)
 - [🦑 Development](#-development)
 - [✨ Code Style](#-code-style)
 - [👩‍🔬 Testing](#-testing)
@@ -42,7 +31,7 @@ This is in alpha state and you can expect running into problems. If you run into
 - [🛳 Production](#-production)
 - [⬆️ Releases](#️-releases)
   - [Production](#production)
-  - [Pre-releases](#pre-releases)
+  - [Pre-Releases](#pre-releases)
 - [🏛 License](#-license)
 
 ## 📚 Prerequisites
@@ -51,77 +40,17 @@ This is in alpha state and you can expect running into problems. If you run into
 - Docker ([Managed as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/))
 - A Unix based operating system (Mac or Linux)
 
-### Note
-
-Any function that uses `getPastEvents()` will only work on Eth (see: <https://github.com/oceanprotocol/ocean.js/issues/741>). This includes:
-
-- searchPoolforDT()
-- getPoolsbyCreator()
-- getPoolSharesByAddress()
-- getAllPoolLogs()
-- getPreviousValidOrders()
-- searchforDT()
-- getExchangesbyCreator()
-- getExchangeSwaps()
-- getAllExchangesSwaps()
-
-## 🏗 Installation
+## 🏗 Installation & Usage
 
 ```bash
 npm install @oceanprotocol/lib
 ```
 
-## 🏄 Quickstart
-
-```ts
-import { Ocean, Config, ConfigHelper, Logger } from '@oceanprotocol/lib'
-
-const defaultConfig: Config = new ConfigHelper().getConfig(
-  'rinkeby',
-  'YOUR_INFURA_PROJECT_ID'
-)
-
-const config = {
-  ...defaultConfig,
-  metadataCacheUri: 'https://your-metadata-cache.com',
-  providerUri: 'https://your-provider.com'
-}
-
-async function init() {
-  const ocean = await Ocean.getInstance(config)
-  return ocean
-}
-```
-
-### Beginners Guide
-
-This introduction is aimed at developers who are completely new to blockchain, no coding experience is required.
-
-[Go to beginners guide](docs/beginners_guide.md)
-
-### Simple Flow
-
-This stripped-down flow shows the essence of Ocean. Just downloading, no metadata.
-
-[Go to simple flow](docs/quickstart_simple.md)
-
-### Marketplace Flow
-
-This batteries-included flow includes metadata, multiple services for one datatoken, and compute-to-data.
-
-[Go to marketplace flow](docs/quickstart_marketplace.md)
-
-### 📖 Learn more
-
-- [Get test OCEAN](docs/get-test-OCEAN.md) - from rinkeby
-- [Understand config parameters](docs/parameters.md) - envvars vs files
-- [Learn about off-chain services](docs/services.md) - Ocean Provider for data services, Aquarius metadata store
-- [Learn about wallets](docs/wallets.md) - on generating, storing, and accessing private keys
-- [Get an overview of ocean.js](docs/overview.md) - key modules and functions
-
-If you have any difficulties with the quickstarts, or if you have further questions about how to use ocean.js please reach out to us on [Discord](https://discord.gg/TnXjkR5).
-
-If you notice any bugs or issues with ocean.js please [open an issue on github](https://github.com/oceanprotocol/ocean.js/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
+- Checkout our [code examples](CodeExamples.md) or [compute to data examples](C2DExamples.md) to see how you can use ocean.js.
+- Refer to the [Ocean Protocol documentation](https://docs.oceanprotocol.com/) for more guides and tutorials.
+- Visit the [Ocean Protocol website](https://docs.oceanprotocol.com/) for general information about Ocean Protocol.
+- If you have any difficulties or if you have further questions about how to use ocean.js please reach out to us on [Discord](https://discord.gg/TnXjkR5).
+- If you notice any bugs or issues with ocean.js please [open an issue on github](https://github.com/oceanprotocol/ocean.js/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
 
 ## 🦑 Development
 
@@ -156,7 +85,7 @@ Running all tests requires running Ocean Protocol components beforehand with [Ba
 git clone https://github.com/oceanprotocol/barge
 cd barge
 
-./start_ocean.sh --with-provider2 --no-dashboard --with-rbac
+./start_ocean.sh --with-provider2 --no-dashboard --with-c2d
 ```
 
 You can then proceed to run in another terminal.
@@ -198,6 +127,8 @@ npm run test:integration
 # same thing, but with coverage reporting
 npm run test:integration:cover
 ```
+
+> Note: On macOS, changes to the `provider`, `metadataCache` and `subgraph` URLs are required, as their default `barge` IPs can not be accessed due to network constraints on macOS. Instead use `http://127.0.0.1` for each direct call to the mentioned services, but keep the internal `provider` URL (`http://172.15.0.4:8030`) hardcoded inside all DDO's `serviceEndpoint`, and when calling `nft.setMetadata()`.
 
 ## 🛳 Production
 
@@ -243,7 +174,7 @@ Further releases afterwards can be done with `npm run release` again and selecti
 ## 🏛 License
 
 ```
-Copyright ((C)) 2021 Ocean Protocol Foundation
+Copyright ((C)) 2023 Ocean Protocol Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
